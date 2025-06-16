@@ -6,7 +6,12 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def gpt_abfrage_ocr_text(b64_image):
-    prompt = "Extrahiere den lesbaren Textinhalt dieses Geschäftsdokuments zur weiteren Analyse."
+    prompt = (
+        "Analysiere das folgende Bild einer Rechnung.\n"
+        "Auch wenn die Darstellung undeutlich ist, versuche so viel strukturierten Text wie möglich zu extrahieren.\n"
+        "Ignoriere Layout-Fehler, Trennzeichen oder Formatierung – gib nur den vermutlichen reinen Rechnungstext wieder."
+    )
+
     messages = [{
         "role": "user",
         "content": [
@@ -14,6 +19,7 @@ def gpt_abfrage_ocr_text(b64_image):
             {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64_image}"}}
         ]
     }]
+
     try:
         response = openai.chat.completions.create(
             model="gpt-4o",
@@ -21,5 +27,6 @@ def gpt_abfrage_ocr_text(b64_image):
             temperature=0.2
         )
         return response.choices[0].message.content.strip()
-    except:
+    except Exception as e:
+        print(f"Fehler bei GPT-OCR: {e}")
         return ""
