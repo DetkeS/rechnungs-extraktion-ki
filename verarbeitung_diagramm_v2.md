@@ -1,11 +1,11 @@
 ```mermaid
 flowchart TD
-    A[PDF im Eingangsordner] --> B[Vorfilter: Textlayer vorhanden? (PyMuPDF)]
-    B -- Nein --> C[→ PNG erstellen und GPT-Klassifikation (Vision)]
-    B -- Ja --> D[→ GPT-Klassifikation basierend auf Text]
-    C --> E{Dokumenttyp == "rechnung"?}
-    D --> E
-    E -- Nein --> X[Verschiebe in "Nicht-Rechnung"]
-    E -- Ja --> Y[Verschiebe in Archivordner]
-    Y --> Z[→ Weiterverarbeitung (Inhaltsextraktion etc.)]
-```
+    A[PDF im Eingangsordner] --> B[Vorfilter: Textlayer vorhanden]
+    B -- Nein --> C[Erzeuge PNG aus erster Seite]
+    C --> D[GPT-Klassifikation mit Bild (Vision)]
+    B -- Ja --> E[GPT-Klassifikation mit extrahiertem Text]
+    D --> F{Dokumenttyp == rechnung?}
+    E --> F
+    F -- Nein --> X[Verschiebe in "Nicht-Rechnung"]
+    F -- Ja --> Y[Verschiebe in Archivordner]
+    Y --> Z[Weitere Verarbeitung (Artikel extrahieren etc.)]
