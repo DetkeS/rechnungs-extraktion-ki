@@ -5,8 +5,6 @@ import atexit
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
-import openai
-
 from utils.konvertierer import konvertiere_erste_seite_zu_base64, extrahiere_text_aus_pdf
 from klassifikation.dokument_klassifizieren import gpt_klassifikation
 from ocr.ocr_fallback import gpt_abfrage_ocr_text
@@ -20,6 +18,7 @@ from vorfilter import pdf_hat_nutzbaren_text
 # Konfiguration
 FLUSH_INTERVAL = 250
 BATCH_SIZE = 1000
+MAX_KATEGORIEN = set()
 TOCHTERFIRMEN = ["wähler", "kuhlmann", "mudcon", "datacon", "seier", "geidel", "bhk"]
 
 # Statistik
@@ -46,25 +45,6 @@ def erkenne_zugehoerigkeit(text):
             return firma
     return "unbekannt"
 
-def gpt_kategorisiere_artikelzeile(text):
-    prompt = (
-        f"Ordne die folgende Artikelbezeichnung einer passenden Hauptkategorie und Unterkategorie zu:\n"
-        f"Bezeichnung: '{text}'\n"
-        f"Bitte antworte im Format: Kategorie: ..., Unterkategorie: ..."
-    )
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.3,
-    )
-    reply = response['choices'][0]['message']['content']
-    try:
-        kat = reply.split("Kategorie:")[1].split(",")[0].strip()
-        unter = reply.split("Unterkategorie:")[1].strip()
-        return kat, unter
-    except:
-        return "unbekannt", "unbekannt"
-
 def hauptprozess():
     verarbeitete = lade_verarbeitete_liste()
     pdf_files = list(input_folder.glob("*.pdf"))
@@ -72,7 +52,7 @@ def hauptprozess():
     for index, pdf_path in enumerate(pdf_files[:BATCH_SIZE], 1):
         start = time.time()
         dateiname = pdf_path.name
-        print(f"➞️ {index}/{len(pdf_files)}: {dateiname}")
+        print(f"➡️ {index}/{len(pdf_files)}: {dateiname}")
         if dateiname in verarbeitete:
             print("⏭️ Bereits verarbeitet.")
             continue
@@ -119,6 +99,7 @@ def hauptprozess():
         df["Verfahren"] = verfahren
         df["Verarbeitung_Dauer"] = round(dauer, 2)
         df["Zugehörigkeit"] = erkenne_zugehoerigkeit(text)
+        df = plausibilitaet_pruefen(df)
         alle_dfs.append(df)
         shutil.move(pdf_path, archiv_folder / dateiname)
         speichere_verarbeitete_datei(dateiname)
@@ -130,50 +111,48 @@ def hauptprozess():
         timestamped = output_excel.parent / f"artikelpositionen_ki_batch_final.xlsx"
         pd.concat(alle_dfs, ignore_index=True).to_excel(timestamped, index=False)
 
+    # 🔁 Merge aller Batchdateien & Kategoriebildung
     merge_and_enrich(output_excel.parent)
 
+    # Statistik
     gesamt_dauer = time.time() - gesamt_start
     gesamt = anzahl_text + anzahl_ocr
-    print(f"🌟 Verarbeitung beendet: {gesamt} Dateien in {gesamt_dauer:.1f}s")
+    print(f"🏁 Verarbeitung beendet: {gesamt} Dateien in {gesamt_dauer:.1f}s")
     if gesamt:
-        print(f"📜 Ø/Datei: {gesamt_dauer/gesamt:.2f}s")
+        print(f"📝 Ø/Datei: {gesamt_dauer/gesamt:.2f}s")
         print(f"📄 Textbasiert: {anzahl_text} ({anzahl_text/gesamt:.1%}), Ø {dauer_text/max(1,anzahl_text):.2f}s")
         print(f"🧠 GPT-OCR: {anzahl_ocr} ({anzahl_ocr/gesamt:.1%}), Ø {dauer_ocr/max(1,anzahl_ocr):.2f}s")
         print(f"❌ Nicht-Rechnungen: {nicht_rechnungen} ({nicht_rechnungen/gesamt:.1%})")
         print(f"⚠️ Probleme: {probleme} ({probleme/gesamt:.1%})")
 
 def merge_and_enrich(ordner):
-    logeintraege = []
     batches = list(ordner.glob("artikelpositionen_ki_batch_*.xlsx"))
     if not batches:
         print("⚠️ Keine Batchdateien zum Zusammenführen gefunden.")
         return
     frames = [pd.read_excel(f) for f in batches]
     merged = pd.concat(frames, ignore_index=True)
-    kategorien = []
-    unterkategorien = []
-
-    for _, row in merged.iterrows():
-        bezeichnung = str(row.get("Artikelbezeichnung", "")).strip()
-        if not bezeichnung:
-            kategorien.append("unbekannt")
-            unterkategorien.append("unbekannt")
-            continue
-        try:
-            kat, unterkat = gpt_kategorisiere_artikelzeile(bezeichnung)
-        except Exception as e:
-            kat, unterkat = "fehler", "fehler"
-        kategorien.append(kat)
-        unterkategorien.append(unterkat)
-        logeintraege.append({"Artikelbezeichnung": bezeichnung, "Kategorie": kat, "Unterkategorie": unterkat, "Zeitpunkt": datetime.now()})
-
-    merged["Kategorie"] = kategorien
-    merged["Unterkategorie"] = unterkategorien
+    if "Kategorie" not in merged.columns:
+        merged["Kategorie"] = merged["Artikelbezeichnung"].apply(lambda x: rate_kategorie(x))
+    if "Unterkategorie" not in merged.columns:
+        merged["Unterkategorie"] = merged["Artikelbezeichnung"].apply(lambda x: rate_unterkategorie(x))
     merged.to_excel(ordner / f"artikelpositionen_ki_GESAMT_{datetime.now():%Y%m%d_%H%M}.xlsx", index=False)
 
-    df_log = pd.DataFrame(logeintraege)
-    df_log.to_excel(ordner / f"kategorielog_{datetime.now():%Y%m%d_%H%M}.xlsx", index=False)
-    print("✅ Kategorien wurden via GPT erzeugt und geloggt.")
+def rate_kategorie(bezeichnung):
+    text = str(bezeichnung).lower()
+    if "bagger" in text or "radlader" in text:
+        return "Maschine"
+    if "bitumen" in text or "asphalt" in text:
+        return "Material"
+    return "unbekannt"
+
+def rate_unterkategorie(bezeichnung):
+    text = str(bezeichnung).lower()
+    if "miete" in text:
+        return "Miete"
+    if "kauf" in text:
+        return "Kauf"
+    return "unbekannt"
 
 if __name__ == "__main__":
     hauptprozess()
