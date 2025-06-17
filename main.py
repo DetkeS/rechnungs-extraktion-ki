@@ -187,24 +187,24 @@ def merge_and_enrich(ordner):
     unterkategorien = []
     logeintraege = []
 
-        for _, row in merged.iterrows():
-        bezeichnung = str(row.get("Artikelbezeichnung", "")).strip()
-        if not bezeichnung:
-            kategorien.append("Sonstiges")
-            unterkategorien.append("unbekannt")
-            continue
-        try:
-            kat, unterkat = gpt_kategorisiere_artikelzeile(bezeichnung)
-        except Exception:
-            kat, unterkat = "Sonstiges", "unbekannt"
-        kategorien.append(kat)
-        unterkategorien.append(unterkat)
-        logeintraege.append({
-            "Artikelbezeichnung": bezeichnung,
-            "Kategorie": kat,
-            "Unterkategorie": unterkat,
-            "Zeitpunkt": datetime.now()
-        })
+    for _, row in merged.iterrows():
+    bezeichnung = str(row.get("Artikelbezeichnung", "")).strip()
+    if not bezeichnung:
+        kategorien.append("Sonstiges")
+        unterkategorien.append("unbekannt")
+        continue
+    try:
+        kat, unterkat = gpt_kategorisiere_artikelzeile(bezeichnung)
+    except Exception:
+        kat, unterkat = "Sonstiges", "unbekannt"
+    kategorien.append(kat)
+    unterkategorien.append(unterkat)
+    logeintraege.append({
+        "Artikelbezeichnung": bezeichnung,
+        "Kategorie": kat,
+        "Unterkategorie": unterkat,
+        "Zeitpunkt": datetime.now()
+    })
 
     merged["Kategorie"] = kategorien
     merged["Unterkategorie"] = unterkategorien
