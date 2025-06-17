@@ -16,6 +16,8 @@ from validierung.plausibilitaet import plausibilitaet_pruefen
 from daten.dateiverwaltung import lade_verarbeitete_liste, speichere_verarbeitete_datei
 from daten.verarbeitungspfade import input_folder, nicht_rechnung_folder, archiv_folder, problemordner,bereits_verarbeitet_ordner,output_excel
 from vorfilter import pdf_hat_nutzbaren_text
+# kat. tabelle vorprüfung notwendig 
+from glob import glob
 
 # Konfiguration
 FLUSH_INTERVAL = 100
@@ -47,23 +49,51 @@ def erkenne_zugehoerigkeit(text):
     return "unbekannt"
 
 def gpt_kategorisiere_artikelzeile(text):
+    # Vorprüfung: Ist Artikelbezeichnung schon kategorisiert?
+    text_clean = str(text).strip().lower()
+    vorhandene_logs = sorted(Path(output_excel.parent).glob("kategorielog_*.xlsx"))
+
+    for log_path in reversed(vorhandene_logs):  # Neueste zuerst
+        try:
+            df_log = pd.read_excel(log_path)
+            df_log["clean"] = df_log["Artikelbezeichnung"].astype(str).str.strip().str.lower()
+            treffer = df_log[df_log["clean"] == text_clean]
+            if not treffer.empty:
+                kat = treffer.iloc[0]["Kategorie"]
+                unterkat = treffer.iloc[0]["Unterkategorie"]
+                if kat.lower() not in ["fehler", "unbekannt", "sonstiges"]:
+                    return kat, unterkat  # vorhandene gute Zuordnung gefunden
+        except:
+            continue  # ignoriere fehlerhafte Logs
+    
+    # GPT-Fallback wenn keine brauchbare Zuordnung gefunden
     prompt = (
-        f"Ordne die folgende Artikelbezeichnung einer passenden Hauptkategorie und Unterkategorie zu:\n"
-        f"Bezeichnung: '{text}'\n"
-        f"Bitte antworte im Format: Kategorie: ..., Unterkategorie: ..."
+        "Analysiere die folgende Artikelbezeichnung und ordne sie einer passenden "
+        "Hauptkategorie und Unterkategorie zu, die den Inhalt möglichst gut beschreiben.\n"
+        "Die Kategorien sollen sachlich, kurz und nachvollziehbar sein – idealerweise wie typische Kosten- oder Buchungskategorien.\n\n"
+        "Falls keine passende Zuordnung möglich ist, gib Folgendes zurück:\n"
+        "Kategorie: Sonstiges, Unterkategorie: unklar\n\n"
+        f"Bezeichnung: '{text}'\n\n"
+        "Bitte antworte **nur im folgenden Format**:\n"
+        "Kategorie: <Hauptkategorie>, Unterkategorie: <Unterkategorie>"
     )
+
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.3,
     )
+
     reply = response['choices'][0]['message']['content']
     try:
-        kat = reply.split("Kategorie:")[1].split(",")[0].strip()
-        unter = reply.split("Unterkategorie:")[1].strip()
-        return kat, unter
+        if "Kategorie:" in reply and "Unterkategorie:" in reply:
+            kat = reply.split("Kategorie:")[1].split(",")[0].strip()
+            unterkat = reply.split("Unterkategorie:")[1].strip()
+            return kat, unterkat
+        else:
+            return "Sonstiges", "unbekannt"
     except:
-        return "unbekannt", "unbekannt"
+        return "Sonstiges", "unbekannt"
 
 def hauptprozess():
     global anzahl_text, anzahl_ocr, probleme, nicht_rechnungen, dauer_text, dauer_ocr, alle_dfs
@@ -155,28 +185,35 @@ def merge_and_enrich(ordner):
     merged = pd.concat(frames, ignore_index=True)
     kategorien = []
     unterkategorien = []
+    logeintraege = []
 
-    for _, row in merged.iterrows():
+        for _, row in merged.iterrows():
         bezeichnung = str(row.get("Artikelbezeichnung", "")).strip()
         if not bezeichnung:
-            kategorien.append("unbekannt")
+            kategorien.append("Sonstiges")
             unterkategorien.append("unbekannt")
             continue
         try:
             kat, unterkat = gpt_kategorisiere_artikelzeile(bezeichnung)
-        except Exception as e:
-            kat, unterkat = "fehler", "fehler"
+        except Exception:
+            kat, unterkat = "Sonstiges", "unbekannt"
         kategorien.append(kat)
         unterkategorien.append(unterkat)
-        logeintraege.append({"Artikelbezeichnung": bezeichnung, "Kategorie": kat, "Unterkategorie": unterkat, "Zeitpunkt": datetime.now()})
+        logeintraege.append({
+            "Artikelbezeichnung": bezeichnung,
+            "Kategorie": kat,
+            "Unterkategorie": unterkat,
+            "Zeitpunkt": datetime.now()
+        })
 
     merged["Kategorie"] = kategorien
     merged["Unterkategorie"] = unterkategorien
     merged.to_excel(ordner / f"artikelpositionen_ki_GESAMT_{datetime.now():%Y%m%d_%H%M}.xlsx", index=False)
 
+    # Neuer Log wird ergänzt
     df_log = pd.DataFrame(logeintraege)
-    df_log.to_excel(ordner / f"kategorielog_{datetime.now():%Y%m%d_%H%M}.xlsx", index=False)
-    print("✅ Kategorien wurden via GPT erzeugt und geloggt.")
+    df_log.to_excel(ordner / f"kategorielog_neu_{datetime.now():%Y%m%d_%H%M}.xlsx", index=False)
+    print("✅ Kategorien wurden (teilweise wiederverwendet) via GPT erzeugt und geloggt.")
 
 if __name__ == "__main__":
     hauptprozess()
