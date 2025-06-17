@@ -154,7 +154,7 @@ def hauptprozess():
             print("🔠 Starte GPT-Klassifikation auf Textbasis")
             text = extrahiere_text_aus_pdf(pdf_path)
             dauer = time.time() - start
-        print(f"✅ Fertig in {dauer:.1f}s")
+            print(f"✅ Fertig in {dauer:.1f}s")
             verfahren = "text"
             anzahl_text += 1
             dauer_text += dauer
@@ -211,7 +211,6 @@ def hauptprozess():
         print(f"⚠️ Probleme: {probleme} ({probleme/gesamt:.1%})")
 
 def merge_and_enrich(ordner):
-    logeintraege = []
     batches = list(ordner.glob("artikelpositionen_ki_batch_*.xlsx"))
     if not batches:
         print("⚠️ Keine Batchdateien zum Zusammenführen gefunden.")

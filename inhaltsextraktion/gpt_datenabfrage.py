@@ -8,9 +8,10 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 def gpt_abfrage_inhalt(text=None, b64_image=None):
     prompt = (
         "Extrahiere alle Artikelpositionen aus dieser Rechnung in folgender CSV-Struktur:\n"
-        "Artikelbezeichnung;Menge;Einheit;Einzelpreis;Gesamtpreis;Lieferant;Rechnungsdatum;Rechnungsempfänger\n"
+        "Artikelbezeichnung;Menge;Einheit;Einzelpreis;Gesamtpreis;Lieferant;Rechnungsdatum;Rechnungsempfänger;Rechnungsnummer"
         "Gib ausschließlich die Tabelle als CSV mit Semikolon-Trennung zurück.\n"
-        "WICHTIG: Gib KEINE fiktiven Daten an. Wenn keine Daten enthalten sind, gib eine leere Tabelle zurück."
+        "WICHTIG: Gib KEINE fiktiven Daten an. Wenn keine Daten enthalten sind, gib eine leere Tabelle zurück.\n"
+        "Extrahiere den Rechnungsempfunger aus dem Adressfeld des Dokuments, an den das Schreiben adressiert wurde"
     )
     messages = [{"role": "user", "content": [{"type": "text", "text": prompt}]}]
     if b64_image:
