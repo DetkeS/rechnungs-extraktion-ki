@@ -14,11 +14,11 @@ from inhaltsextraktion.gpt_datenabfrage import gpt_abfrage_inhalt
 from parsing.csv_parser import parse_csv_in_dataframe
 from validierung.plausibilitaet import plausibilitaet_pruefen
 from daten.dateiverwaltung import lade_verarbeitete_liste, speichere_verarbeitete_datei
-from daten.verarbeitungspfade import input_folder, nicht_rechnung_folder, archiv_folder, problemordner, output_excel
+from daten.verarbeitungspfade import input_folder, nicht_rechnung_folder, archiv_folder, problemordner,bereits_verarbeitet_ordner,output_excel
 from vorfilter import pdf_hat_nutzbaren_text
 
 # Konfiguration
-FLUSH_INTERVAL = 250
+FLUSH_INTERVAL = 100
 BATCH_SIZE = 1000
 TOCHTERFIRMEN = ["wähler", "kuhlmann", "mudcon", "datacon", "seier", "geidel", "bhk"]
 
@@ -66,6 +66,7 @@ def gpt_kategorisiere_artikelzeile(text):
         return "unbekannt", "unbekannt"
 
 def hauptprozess():
+    global anzahl_text, anzahl_ocr, probleme, nicht_rechnungen, dauer_text, dauer_ocr, alle_dfs
     verarbeitete = lade_verarbeitete_liste()
     pdf_files = list(input_folder.glob("*.pdf"))
     print(f"📂 {len(pdf_files)} Dateien gefunden.")
@@ -75,6 +76,8 @@ def hauptprozess():
         print(f"➞️ {index}/{len(pdf_files)}: {dateiname}")
         if dateiname in verarbeitete:
             print("⏭️ Bereits verarbeitet.")
+            shutil.move(pdf_path, bereits_verarbeitet_ordner / dateiname)
+            speichere_verarbeitete_datei(dateiname)
             continue
         ist_lesbar = pdf_hat_nutzbaren_text(pdf_path)
         if not ist_lesbar:
