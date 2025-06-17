@@ -1,0 +1,116 @@
+💾 Logging aktiv: verarbeitung_log_20250617_1521.txt
+🔍 Starte Verarbeitung mit Zwischenspeicherung und Batch-Limit...
+📂 15 Dateien gefunden.
+➞️ 1/15: 12059_87765.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 3.7s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 2/15: 12059_87766.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 1.1s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 3/15: 12059_87767.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 1.5s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 4/15: 12059_87768.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.8s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 5/15: 12059_87769.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.8s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 6/15: 12059_87786.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.8s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 7/15: 12059_87787.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.9s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 8/15: 12059_87809.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.7s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 9/15: 12059_87810.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.8s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 10/15: 12059_87811.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 1.4s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 11/15: 12059_87829.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 2.1s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 12/15: 4089_250409135634_001.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: NEIN
+🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)
+✅ Fertig in 39.3s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 13/15: 6756.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.7s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 14/15: 6757.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 1.0s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 15/15: 6769.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 1.0s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+📊 Gesamtausgabe gespeichert: artikelpositionen_ki_GESAMT_<timestamp>.xlsx
+✅ Kategorien wurden (teilweise wiederverwendet) via GPT erzeugt und geloggt.
+🌟 Verarbeitung beendet: 15 Dateien in 136.5s
+📜 Ø/Datei: 9.10s
+📄 Textbasiert: 14 (93.3%), Ø 1.23s
+🧠 GPT-OCR: 1 (6.7%), Ø 39.26s
+❌ Nicht-Rechnungen: 0 (0.0%)
+⚠️ Probleme: 0 (0.0%)

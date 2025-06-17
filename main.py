@@ -35,7 +35,6 @@ class DualLogger:
 # Konfiguration
 FLUSH_INTERVAL = 100
 BATCH_SIZE = 1000
-TOCHTERFIRMEN = ["wähler", "kuhlmann", "mudcon", "datacon", "seier", "geidel", "bhk"]
 
 # Statistik
 gesamt_start = time.time()
@@ -67,53 +66,6 @@ def erkenne_zugehoerigkeit(text):
         if firma in lower:
             return firma
     return "unbekannt"
-
-def gpt_kategorisiere_artikelzeile(text):
-    # Vorprüfung: Ist Artikelbezeichnung schon kategorisiert?
-    text_clean = str(text).strip().lower()
-    vorhandene_logs = sorted(Path(output_excel.parent).glob("kategorielog_*.xlsx"))
-
-    for log_path in reversed(vorhandene_logs):  # Neueste zuerst
-        try:
-            df_log = pd.read_excel(log_path)
-            df_log["clean"] = df_log["Artikelbezeichnung"].astype(str).str.strip().str.lower()
-            treffer = df_log[df_log["clean"] == text_clean]
-            if not treffer.empty:
-                kat = treffer.iloc[0]["Kategorie"]
-                unterkat = treffer.iloc[0]["Unterkategorie"]
-                if kat.lower() not in ["fehler", "unbekannt", "sonstiges"]:
-                    return kat, unterkat  # vorhandene gute Zuordnung gefunden
-        except:
-            continue  # ignoriere fehlerhafte Logs
-    
-    # GPT-Fallback wenn keine brauchbare Zuordnung gefunden
-    prompt = (
-        "Analysiere die folgende Artikelbezeichnung und ordne sie einer passenden "
-        "Hauptkategorie und Unterkategorie zu, die den Inhalt möglichst gut beschreiben.\n"
-        "Die Kategorien sollen sachlich, kurz und nachvollziehbar sein – idealerweise wie typische Kosten- oder Buchungskategorien.\n\n"
-        "Falls keine passende Zuordnung möglich ist, gib Folgendes zurück:\n"
-        "Kategorie: Sonstiges, Unterkategorie: unklar\n\n"
-        f"Bezeichnung: '{text}'\n\n"
-        "Bitte antworte **nur im folgenden Format**:\n"
-        "Kategorie: <Hauptkategorie>, Unterkategorie: <Unterkategorie>"
-    )
-
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.3,
-    )
-
-    reply = response['choices'][0]['message']['content']
-    try:
-        if "Kategorie:" in reply and "Unterkategorie:" in reply:
-            kat = reply.split("Kategorie:")[1].split(",")[0].strip()
-            unterkat = reply.split("Unterkategorie:")[1].strip()
-            return kat, unterkat
-        else:
-            return "Sonstiges", "unbekannt"
-    except:
-        return "Sonstiges", "unbekannt"
 
 def hauptprozess():
     global anzahl_text, anzahl_ocr, probleme, nicht_rechnungen, dauer_text, dauer_ocr, alle_dfs
@@ -218,38 +170,203 @@ def merge_and_enrich(ordner):
 
     frames = [pd.read_excel(f) for f in batches]
     merged = pd.concat(frames, ignore_index=True)
-    kategorien = []
-    unterkategorien = []
+
+    # 🧼 Einheitenharmonisierung + Logging   
+    merged = harmonisiere_daten_mit_mapping(merged, mapping_path="mein_mapping.xlsx")
+
+    # 🔢 Zahlenbereinigung mit Rohwerten
+    merged = bereinige_zahlen(merged)
+
+    # 🧠 Kategorisierung über alle Artikelbezeichnungen global
+    merged, logeintraege = kategorisiere_artikel_global(merged)
+
+    # 📁 Speichern der Gesamtausgabe
+    gesamt_path = ordner / f"artikelpositionen_ki_GESAMT_{datetime.now():%Y%m%d_%H%M}.xlsx"
+    merged.to_excel(gesamt_path, index=False)
+    print(f"📊 Gesamtausgabe gespeichert: {gesamt_path.name}")
+
+    # 📝 Speichern des Kategorielogs (nur wenn etwas kategorisiert wurde)
+    if logeintraege:
+        df_log = pd.DataFrame(logeintraege)
+        df_log.to_excel(ordner / f"kategorielog_neu_{datetime.now():%Y%m%d_%H%M}.xlsx", index=False)
+        print("✅ Kategorien wurden global via GPT erzeugt und geloggt.")
+
+def kategorisiere_artikel_global(df):
+    print("🧠 GPT: Kategorisiere Artikel global mit Log-Wiederverwendung …")
+
+    artikel = df["Artikelbezeichnung"].dropna().unique()
+    artikel_clean = pd.Series(artikel).astype(str).str.strip().str.lower()
+
+    # Lade alte Logs
+    vorhandene_logs = sorted(Path(output_excel.parent).glob("kategorielog_*.xlsx"))
+    treffer_alt = pd.DataFrame()
+
+    for log_path in reversed(vorhandene_logs):
+        try:
+            log_df = pd.read_excel(log_path)
+            log_df["clean"] = log_df["Artikelbezeichnung"].astype(str).str.strip().str.lower()
+            log_df = log_df[["Artikelbezeichnung", "Kategorie", "Unterkategorie", "clean"]].drop_duplicates()
+            treffer_alt = pd.concat([treffer_alt, log_df], ignore_index=True)
+        except Exception as e:
+            print(f"⚠️ Fehler beim Lesen eines Logs: {e}")
+            continue
+
+    # Entferne schlechte Kategorien
+    treffer_alt = treffer_alt[
+        ~treffer_alt["Kategorie"].str.lower().isin(["sonstiges", "fehler", "unbekannt"])
+        & ~treffer_alt["Unterkategorie"].str.lower().isin(["unklar", "unbekannt"])
+    ]
+
+    # Trenne bekannte und neue Begriffe
+    artikel_set = pd.DataFrame({"Artikelbezeichnung": artikel, "clean": artikel_clean})
+    reuse_df = artikel_set.merge(treffer_alt, on="clean", how="inner").drop_duplicates("Artikelbezeichnung")
+    gpt_df = artikel_set[~artikel_set["Artikelbezeichnung"].isin(reuse_df["Artikelbezeichnung"])]
+
+    print(f"🔁 Wiederverwendete Kategorien: {len(reuse_df)}")
+    print(f"🧠 Neue GPT-Kategorisierung für: {len(gpt_df)}")
+
     logeintraege = []
 
-    for _, row in merged.iterrows():
-        bezeichnung = str(row.get("Artikelbezeichnung", "")).strip()
-        if not bezeichnung:
-            kategorien.append("Sonstiges")
-            unterkategorien.append("unbekannt")
-            continue
+    # GPT-Kategorisierung für neue Begriffe
+    if not gpt_df.empty:
+        prompt = (
+            "Ordne den folgenden Artikeln je eine passende Haupt- und Unterkategorie zu.\n"
+            "Gib nur die CSV-Zeilen mit folgenden Spalten zurück:\n"
+            "Artikelbezeichnung;Hauptkategorie;Unterkategorie\n\n" +
+            "\n".join(gpt_df["Artikelbezeichnung"])
+        )
         try:
-            kat, unterkat = gpt_kategorisiere_artikelzeile(bezeichnung)
-        except Exception:
-            kat, unterkat = "Sonstiges", "unbekannt"
-        kategorien.append(kat)
-        unterkategorien.append(unterkat)
+            response = openai.ChatCompletion.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2
+            )
+            antwort = response['choices'][0]['message']['content'].strip()
+            lines = [line for line in antwort.splitlines() if ";" in line]
+            cat_gpt = pd.read_csv(StringIO("\n".join(lines)), sep=";", engine="python", on_bad_lines="skip")
+            cat_gpt["Herkunft"] = "gpt"
+        except Exception as e:
+            print(f"⚠️ Fehler bei GPT-Kategorisierung: {e}")
+            cat_gpt = pd.DataFrame(columns=["Artikelbezeichnung", "Hauptkategorie", "Unterkategorie", "Herkunft"])
+    else:
+        cat_gpt = pd.DataFrame(columns=["Artikelbezeichnung", "Hauptkategorie", "Unterkategorie", "Herkunft"])
+
+    # Ergänze Herkunft zu reuse-Daten
+    if not reuse_df.empty:
+        reuse_df["Herkunft"] = "reuse"
+        reuse_df.rename(columns={"Kategorie": "Hauptkategorie"}, inplace=True)
+
+    # Kombiniere alles
+    gesamt_kat = pd.concat([reuse_df[["Artikelbezeichnung", "Hauptkategorie", "Unterkategorie", "Herkunft"]], cat_gpt], ignore_index=True)
+    df = df.merge(gesamt_kat, on="Artikelbezeichnung", how="left")
+    df.rename(columns={"Hauptkategorie": "Kategorie"}, inplace=True)
+
+    # Baue Log
+    for _, row in gesamt_kat.iterrows():
         logeintraege.append({
-            "Artikelbezeichnung": bezeichnung,
-            "Kategorie": kat,
-            "Unterkategorie": unterkat,
+            "Artikelbezeichnung": row["Artikelbezeichnung"],
+            "Kategorie": row["Kategorie"],
+            "Unterkategorie": row["Unterkategorie"],
+            "Herkunft": row["Herkunft"],
             "Zeitpunkt": datetime.now()
         })
 
-    merged["Kategorie"] = kategorien
-    merged["Unterkategorie"] = unterkategorien
-    merged.to_excel(ordner / f"artikelpositionen_ki_GESAMT_{datetime.now():%Y%m%d_%H%M}.xlsx", index=False)
+    return df, logeintraege
 
-    # Neuer Log wird ergänzt
-    df_log = pd.DataFrame(logeintraege)
-    print(f"📊 Gesamtausgabe gespeichert: artikelpositionen_ki_GESAMT_<timestamp>.xlsx")
-    df_log.to_excel(ordner / f"kategorielog_neu_{datetime.now():%Y%m%d_%H%M}.xlsx", index=False)
-    print("✅ Kategorien wurden (teilweise wiederverwendet) via GPT erzeugt und geloggt.")
+def harmonisiere_daten_mit_mapping(df, mapping_path=None):
+    print("🔧 Harmonisiere Einheiten & Artikelbezeichnungen mit Mapping + Logging ...")
 
+    default_map = {
+        "t": "Tonne", "t.": "Tonne", "T": "Tonne",
+        "kg": "Kilogramm",
+        "St": "Stück", "St.": "Stück", "st": "Stück",
+        "m": "Meter", "m.": "Meter",
+        "l": "Liter", "L": "Liter",
+        "psch": "Pauschale", "pauschal": "Pauschale"
+    }
+
+    mapping_dict = default_map.copy()
+    if mapping_path and Path(mapping_path).exists():
+        try:
+            df_map = pd.read_excel(mapping_path)
+            for _, row in df_map.iterrows():
+                roh = str(row["Einheit_roh"]).strip()
+                norm = str(row["Einheit_normiert"]).strip()
+                if roh and norm:
+                    mapping_dict[roh] = norm
+            print(f"📄 Mapping-Datei geladen: {mapping_path}")
+        except Exception as e:
+            print(f"⚠️ Fehler beim Laden des Mappings: {e}")
+
+    unbekannte = set()
+
+    def reinige_einheit(e):
+        e_clean = str(e).strip().replace(".", "")
+        normiert = mapping_dict.get(e_clean)
+        if not normiert:
+            unbekannte.add(e_clean)
+            return e_clean
+        return normiert
+
+    def reinige_bezeichnung(text):
+        if not isinstance(text, str):
+            return text
+        return text.strip().replace("  ", " ")
+
+    if "Einheit" in df.columns:
+        df["Einheit"] = df["Einheit"].apply(reinige_einheit)
+    if "Artikelbezeichnung" in df.columns:
+        df["Artikelbezeichnung"] = df["Artikelbezeichnung"].apply(reinige_bezeichnung)
+
+    if unbekannte:
+        log_df = pd.DataFrame(sorted(unbekannte), columns=["Einheit_roh"])
+        log_df["Einheit_normiert"] = ""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+        log_path = output_excel.parent / f"einheiten_log_{timestamp}.xlsx"
+        log_df.to_excel(log_path, index=False)
+        print(f"📝 {len(unbekannte)} unbekannte Einheiten gespeichert in: {log_path}")
+
+    return df
+    
+def korrigiere_zahl_mit_gpt(wert):
+    prompt = f"""
+    Korrigiere folgende fehlerhafte Zahl so, dass sie maschinenlesbar als float verwendet werden kann:
+    Gib nur die Zahl im Format 1234.56 zurück (kein Eurozeichen, kein Text).
+    Beispiel: '4.473.39' → '4473.39'
+    Wert: {wert}
+    """
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0
+        )
+        result = response.choices[0].message.content.strip()
+        return float(result)
+    except:
+        return None
+
+def bereinige_zahlen(df):
+    print("🧠 Formatiere und korrigiere Zahlen …")
+    for spalte in ["Menge", "Einzelpreis", "Gesamtpreis"]:
+        if spalte in df.columns:
+            df[f"{spalte}_roh"] = df[spalte]
+            df[spalte] = df[spalte].astype(str) \
+                                   .str.replace("€", "", regex=False) \
+                                   .str.replace(",", ".", regex=False) \
+                                   .str.replace(" ", "", regex=False) \
+                                   .str.strip()
+
+            def umwandeln_oder_gpt(wert):
+                try:
+                    if isinstance(wert, str) and wert.count('.') > 1:
+                        raise ValueError()
+                    return float(wert)
+                except:
+                    return korrigiere_zahl_mit_gpt(wert)
+
+            df[spalte] = df[spalte].apply(umwandeln_oder_gpt)
+    return df
+ 
 if __name__ == "__main__":
     hauptprozess()
