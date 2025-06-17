@@ -181,6 +181,7 @@ def merge_and_enrich(ordner):
     if not batches:
         print("⚠️ Keine Batchdateien zum Zusammenführen gefunden.")
         return
+
     frames = [pd.read_excel(f) for f in batches]
     merged = pd.concat(frames, ignore_index=True)
     kategorien = []
@@ -188,23 +189,23 @@ def merge_and_enrich(ordner):
     logeintraege = []
 
     for _, row in merged.iterrows():
-    bezeichnung = str(row.get("Artikelbezeichnung", "")).strip()
-    if not bezeichnung:
-        kategorien.append("Sonstiges")
-        unterkategorien.append("unbekannt")
-        continue
-    try:
-        kat, unterkat = gpt_kategorisiere_artikelzeile(bezeichnung)
-    except Exception:
-        kat, unterkat = "Sonstiges", "unbekannt"
-    kategorien.append(kat)
-    unterkategorien.append(unterkat)
-    logeintraege.append({
-        "Artikelbezeichnung": bezeichnung,
-        "Kategorie": kat,
-        "Unterkategorie": unterkat,
-        "Zeitpunkt": datetime.now()
-    })
+        bezeichnung = str(row.get("Artikelbezeichnung", "")).strip()
+        if not bezeichnung:
+            kategorien.append("Sonstiges")
+            unterkategorien.append("unbekannt")
+            continue
+        try:
+            kat, unterkat = gpt_kategorisiere_artikelzeile(bezeichnung)
+        except Exception:
+            kat, unterkat = "Sonstiges", "unbekannt"
+        kategorien.append(kat)
+        unterkategorien.append(unterkat)
+        logeintraege.append({
+            "Artikelbezeichnung": bezeichnung,
+            "Kategorie": kat,
+            "Unterkategorie": unterkat,
+            "Zeitpunkt": datetime.now()
+        })
 
     merged["Kategorie"] = kategorien
     merged["Unterkategorie"] = unterkategorien
