@@ -442,7 +442,8 @@ def kategorisiere_artikel_global(df):
     # 🛡️ Finaler Check
     if "Kategorie" not in df.columns:
         raise ValueError("Spalte 'Kategorie' fehlt – Kategorisierung unvollständig")
-
+   
+    return df, logeintraege
 # ==========================================
 # 🔢 DATENPARSING UND TRANSFORMATION
 # ==========================================
@@ -663,12 +664,14 @@ def kategorisiere_artikel_global(df):
     for _, row in gesamt_kat.iterrows():
         logeintraege.append({
             "Artikelbezeichnung": row["Artikelbezeichnung"],
-            "Kategorie": row["Kategorie"],
+            "Kategorie": row["Hauptkategorie"],  # ✅ korrekt
             "Unterkategorie": row["Unterkategorie"],
             "Herkunft": row["Herkunft"],
             "Zeitpunkt": datetime.now()
         })
-
+    if "Kategorie" not in df.columns:
+        raise ValueError("Spalte 'Kategorie' fehlt – Kategorisierung unvollständig")
+   
     return df, logeintraege
 
 def erkenne_zugehoerigkeit(text):

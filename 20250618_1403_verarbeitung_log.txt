@@ -1,0 +1,56 @@
+💾 Logging aktiv: 20250618_1403_verarbeitung_log.txt
+🔍 Starte Verarbeitung mit Zwischenspeicherung und Batch-Limit...
+📂 3 Dateien gefunden.
+➞️ 1/3: unbekannt_DE5204XXABEI.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: NEIN
+🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)
+✅ Fertig in 26.7s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+
+➞️ 2/3: unbekannt_DE5204YVABEI.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: NEIN
+🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)
+✅ Fertig in 21.0s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+
+➞️ 3/3: unbekannt_DE5292THABEI.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: NEIN
+🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)
+✅ Fertig in 22.0s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+
+🔧 Harmonisiere Einheiten & Artikelbezeichnungen mit Mapping + Logging ...
+📄 Mapping-Datei nicht gefunden – leeres Template wird angelegt: mein_mapping.xlsx
+📄 Mapping-Datei geladen: mein_mapping.xlsx
+📝 1 unbekannte Einheiten gespeichert in: C:\Users\Sascha.Detke\OneDrive - Seier Gruppe\Dokumente\RechnungsExtraktionKI\20250618_1403_einheiten_log.xlsx
+🧠 Formatiere und korrigiere Zahlen …
+🧠 GPT: Kategorisiere Artikel global mit Log-Wiederverwendung …
+❌ Fehler in 'Kategorisierung': 'Kategorie'
+
+
+════════════════════════════════════════════════════════════
+🌟 Verarbeitung beendet: 3 Dateien in 82.0s
+
+📊 Verarbeitungsstatistik:
+
+📜 Ø/Datei: 27.34s
+📄 Textbasiert: 0 (0.0%), Ø 0.00s
+🧠 GPT-OCR: 3 (100.0%), Ø 23.26s
+❌ Nicht-Rechnungen: 0 (0.0%)
+⚠️ Probleme: 0 (0.0%)
+
+🧾 Zusammenfassung nach Skriptlauf:
+⚠️ Es sind folgende Fehler aufgetreten:
+ - ❌ Fehler in 'Kategorisierung': 'Kategorie'
+ - ❌ Kategorisierung schlug fehl. Verarbeitung abgebrochen.
+
+📋 Bitte behebe die Fehler und starte das Skript erneut.
+
+❌ Kritischer Fehler erkannt: Verarbeitung wurde bewusst abgebrochen.
+📋 Bitte Ursache beheben (siehe fehlerprotokoll.txt), dann erneut starten.
