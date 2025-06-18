@@ -1,0 +1,24 @@
+💾 Logging aktiv: verarbeitung_log_20250617_1642.txt
+🔍 Starte Verarbeitung mit Zwischenspeicherung und Batch-Limit...
+📂 21 Dateien gefunden.
+➞️ 1/21: 07.04.2025 - Wähler bis April 2026 - Kopie.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 3.1s
+📄 Dokumenttyp: behördlich
+❌ Nicht-Rechnung → verschoben nach: behördlich_07.04.2025 - Wähler bis April 2026 - Kopie.pdf
+➞️ 2/21: 11_Aufmaßblatt Arsyl Neukloster Hedendorf - 09.04.2025.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.8s
+📄 Dokumenttyp: sonstiges
+❌ Nicht-Rechnung → verschoben nach: sonstiges_11_Aufmaßblatt Arsyl Neukloster Hedendorf - 09.04.2025.pdf
+➞️ 3/21: 23.04.25.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: NEIN
+🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)
+✅ Fertig in 15.1s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …

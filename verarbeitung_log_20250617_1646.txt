@@ -1,0 +1,140 @@
+💾 Logging aktiv: verarbeitung_log_20250617_1646.txt
+🔍 Starte Verarbeitung mit Zwischenspeicherung und Batch-Limit...
+📂 19 Dateien gefunden.
+➞️ 1/19: 23.04.25.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: NEIN
+🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)
+✅ Fertig in 18.5s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 2/19: 25-04-03_06-06-18_K118-03-ZOG1.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 2.5s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 3/19: 25-04-04_07-54-25_K118-03-ZOG1.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.5s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 4/19: 25-40A-52273.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: NEIN
+🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)
+✅ Fertig in 23.5s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 5/19: 2Gebührenbescheid.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.6s
+📄 Dokumenttyp: behördlich
+❌ Nicht-Rechnung → verschoben nach: behördlich_2Gebührenbescheid.pdf
+➞️ 6/19: 2_614_244112464.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.8s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 7/19: 2_614_244112465.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.6s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 8/19: 2_614_244112466.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.7s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 9/19: 2_614_244112467.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 1.0s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 10/19: 3. Abschlagsrechnung A 009-25 mit Mengenermittlung.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 1.5s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 11/19: 3. Teilrechnung 817000043.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.6s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 12/19: 3.AR_Aufmaße -gesamt-_geprüft-gekürzt.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.7s
+📄 Dokumenttyp: sonstiges
+❌ Nicht-Rechnung → verschoben nach: sonstiges_3.AR_Aufmaße -gesamt-_geprüft-gekürzt.pdf
+➞️ 13/19: 3.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.8s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 14/19: 3_RE3311345.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.7s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 15/19: 4.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.4s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 16/19: 5.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.9s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 17/19: 6a7c72c3-a635-484b-b7b3-216518e99bf7.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 4.3s
+📄 Dokumenttyp: sonstiges
+❌ Nicht-Rechnung → verschoben nach: sonstiges_6a7c72c3-a635-484b-b7b3-216518e99bf7.pdf
+➞️ 18/19: 7. Abschlagsrechnung.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.6s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+➞️ 19/19: 7.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+✅ Fertig in 0.9s
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+🔧 Harmonisiere Einheiten & Artikelbezeichnungen mit Mapping + Logging ...
+📝 17 unbekannte Einheiten gespeichert in: C:\Users\Sascha.Detke\OneDrive - Seier Gruppe\Dokumente\RechnungsExtraktionKI\einheiten_log_20250617_1648.xlsx
+🧠 Formatiere und korrigiere Zahlen …
+🧠 GPT: Kategorisiere Artikel global mit Log-Wiederverwendung …
