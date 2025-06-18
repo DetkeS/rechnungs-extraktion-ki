@@ -1,0 +1,52 @@
+💾 Logging aktiv: 20250618_1814_verarbeitung_log.txt
+🧪 Aktive Version: Patchstand 20250618_1445
+🔍 Starte Verarbeitung mit Zwischenspeicherung und Batch-Limit...
+📂 4 Dateien gefunden.
+
+════════════════════════════════════════════════════════════
+➞️ 1/4: D224025047000301.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+📤 Sende Bild direkt an GPT zur Inhaltsextraktion …
+📤 Sende Text an GPT zur Inhaltsextraktion …
+⚠️ GPT-Antwort enthält keine semikolongetrennte Tabelle → Problemrechnungen
+➞️ 2/4: DE51BNOM9AEUI.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: NEIN
+⚠️ Kein brauchbarer Text erkannt – wechsle zu GPT-OCR
+🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)
+📤 Sende Bild direkt an GPT zur Inhaltsextraktion …
+📤 Sende Bild an GPT zur Inhaltsextraktion …
+⚠️ GPT-Antwort enthält keine semikolongetrennte Tabelle → Problemrechnungen
+➞️ 3/4: DE52A9Q4ABEI.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: NEIN
+⚠️ Kein brauchbarer Text erkannt – wechsle zu GPT-OCR
+🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)
+📤 Sende Bild direkt an GPT zur Inhaltsextraktion …
+📤 Sende Bild an GPT zur Inhaltsextraktion …
+⚠️ GPT-Antwort enthält keine semikolongetrennte Tabelle → Problemrechnungen
+➞️ 4/4: DE_25022865_073835.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+📤 Sende Bild direkt an GPT zur Inhaltsextraktion …
+📤 Sende Text an GPT zur Inhaltsextraktion …
+⚠️ GPT-Antwort enthält keine semikolongetrennte Tabelle → Problemrechnungen
+⚠️ Keine Batchdateien zum Zusammenführen gefunden.
+
+
+════════════════════════════════════════════════════════════
+🌟 Verarbeitung beendet: 4 Dateien in 18.4s
+
+📊 Verarbeitungsstatistik:
+
+📜 Ø/Datei: 4.59s
+📄 Textbasiert: 2 (50.0%), Ø 0.00s
+🧠 GPT-OCR: 2 (50.0%), Ø 0.00s
+❌ Nicht-Rechnungen: 0 (0.0%)
+⚠️ Probleme: 4 (100.0%)
+
+🧾 Zusammenfassung nach Skriptlauf:
+✅ Keine kritischen Fehler. Der Lauf war erfolgreich.

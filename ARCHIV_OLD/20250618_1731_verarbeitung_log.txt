@@ -1,0 +1,56 @@
+💾 Logging aktiv: 20250618_1731_verarbeitung_log.txt
+🧪 Aktive Version: Patchstand 20250618_1445
+🔍 Starte Verarbeitung mit Zwischenspeicherung und Batch-Limit...
+📂 4 Dateien gefunden.
+
+════════════════════════════════════════════════════════════
+➞️ 1/4: Tabelle_unbrauchbar_sonstiges_DE500CGO4GWVVI.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: NEIN
+🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)
+✅ Fertig in 3.1s
+
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+
+⚠️ Kein valider Header gefunden – Ersetze durch Standard-Header für Tabelle_unbrauchbar_sonstiges_DE500CGO4GWVVI.pdf
+
+➞️ 2/4: Tabelle_unbrauchbar_sonstiges_DE521XWGABEI.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: NEIN
+🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)
+✅ Fertig in 2.4s
+
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+
+⚠️ Kein valider Header gefunden – Ersetze durch Standard-Header für Tabelle_unbrauchbar_sonstiges_DE521XWGABEI.pdf
+
+➞️ 3/4: Tabelle_unbrauchbar_sonstiges_DE56GWMABEC.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: NEIN
+🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)
+✅ Fertig in 1.9s
+
+📤 Sende Text zur GPT-Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+
+⚠️ Kein valider Header gefunden – Ersetze durch Standard-Header für Tabelle_unbrauchbar_sonstiges_DE56GWMABEC.pdf
+
+➞️ 4/4: unlesbar_um den dokumenttyp korrekt zu klassifizieren, benötige ich den inhalt oder eine beschreibung des dokuments. bitte teile mir einige details oder den text des dokuments mit, damit ich eine genaue klassifizierung vornehmen kann._DE521TOFABEI.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: NEIN
+⚠️ Kein OCR möglich → verschoben.
+
+
+❌ Unerwarteter Abbruch im Hauptprozess:
+   [WinError 123] Die Syntax für den Dateinamen, Verzeichnisnamen oder die Datenträgerbezeichnung ist falsch
+
+🧾 Zusammenfassung nach Skriptlauf:
+⚠️ Es sind folgende Fehler aufgetreten:
+Base64-Bild von erster PDF-Seite fehlgeschlagen (C:\Users\Sascha.Detke\OneDrive - Seier Gruppe\Dokumente\RechnungsExtraktionKI\zu_verarbeiten\unlesbar_um den dokumenttyp korrekt zu klassifizieren, benötige ich den inhalt oder eine beschreibung des dokuments. bitte teile mir einige details oder den text des dokuments mit, damit ich eine genaue klassifizierung vornehmen kann._DE521TOFABEI.pdf): Unable to get page count.
+I/O Error: Couldn't open file 'C:/Users/Sascha.Detke/OneDrive - Seier Gruppe/Dokumente/RechnungsExtraktionKI/zu_verarbeiten/unlesbar_um den dokumenttyp korrekt zu klassifizieren, ben<c3><b6>tige ich den inhalt oder eine beschreibung des dokuments. bitte teile mir einige details oder den text des dokuments mit, damit ich eine genaue klassifizierung vornehmen kann._DE521TOFABEI.pdf': No error.
+
+Hauptprozess-Abbruch: [WinError 123] Die Syntax für den Dateinamen, Verzeichnisnamen oder die Datenträgerbezeichnung ist falsch
+
+📋 Bitte behebe die Fehler und starte das Skript erneut.

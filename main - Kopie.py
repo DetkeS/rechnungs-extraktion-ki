@@ -267,7 +267,7 @@ def gpt_klassifikation(text_path=None, image_b64=None):
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.3
+            temperature=0.2
         )
         return response.choices[0].message.content.strip().lower()
     except Exception as e:
@@ -287,7 +287,7 @@ def korrigiere_zahl_mit_gpt(wert):
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.3
+            temperature=0.2
         )
         result = response.choices[0].message.content.strip()
         return float(result)
@@ -314,7 +314,7 @@ def gpt_abfrage_ocr_text(b64_image):
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.3
+            temperature=0.2
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -325,10 +325,10 @@ def gpt_abfrage_ocr_text(b64_image):
 
 def gpt_abfrage_inhalt(text=None, b64_image=None):
     prompt = (
-        "Extrahiere so viele Informationen wie möglich aus dieser Rechnung.\n"
-        "Gib alle Artikelpositionen und Metadaten wie Lieferant, Empfänger, Rechnungsnummer, Datum etc. im freien Klartext aus.\n"
-        "Es ist nicht notwendig, eine Tabelle oder CSV zu erstellen.\n"
-        "Gib einfach den reinen Inhalt strukturiert zurück – zeilenweise, ohne Kommentare oder Erklärungen.\n"
+        "Extrahiere alle Artikelpositionen aus dieser Rechnung in folgender CSV-Struktur:\n"
+        "Artikelbezeichnung;Menge;Einheit;Einzelpreis;Gesamtpreis;Lieferant;Rechnungsdatum;Rechnungsempfänger;Rechnungsnummer\n"
+        "Gib ausschließlich die Tabelle als CSV mit Semikolon-Trennung zurück.\n"
+        "WICHTIG: Gib KEINE fiktiven Daten an. Wenn keine Daten enthalten sind, gib eine leere Tabelle zurück.\n"
         "Extrahiere den Rechnungsempfänger aus dem Adressfeld des Dokuments, an den das Schreiben adressiert wurde."
     )
 
@@ -343,7 +343,7 @@ def gpt_abfrage_inhalt(text=None, b64_image=None):
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.3
+            temperature=0.2
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -407,7 +407,7 @@ def kategorisiere_artikel_global(df):
             response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.3
+                temperature=0.2
             )
             antwort = response['choices'][0]['message']['content'].strip()
             lines = [line for line in antwort.splitlines() if ";" in line]
@@ -478,28 +478,46 @@ def kategorisiere_artikel_global(df):
 
 def parse_csv_in_dataframe(csv_text, dateiname):
     if not csv_text or not isinstance(csv_text, str):
-        fehlermeldung = f"❌ Parsing fehlgeschlagen: Keine oder ungültige Antwort für {dateiname}"
+        fehlermeldung = f"❌ CSV-Parsing fehlgeschlagen: Keine oder ungültige Antwort für {dateiname}"
         print(fehlermeldung)
         VERARBEITUNGSFEHLER.append(fehlermeldung)
         return None
 
-    # 💾 GPT-Antwort immer in Textdatei sichern
-    try:
-        debug_path = output_excel.parent / f"{dateiname.replace('.pdf', '')}_gpt_rohtext.txt"
-        with open(debug_path, "w", encoding="utf-8") as f:
-            f.write(csv_text)
-    except Exception as e:
-        VERARBEITUNGSFEHLER.append(f"❌ Fehler beim Speichern der GPT-Rohantwort ({dateiname}): {e}")
+    # Frühfilter: Ist überhaupt ein Semikolon vorhanden?
+    if ";" not in csv_text:
+        fehlermeldung = f"❌ CSV-Parsing abgebrochen: Antwort enthält keine tabellarischen Daten (kein ';') für {dateiname}"
+        print(fehlermeldung)
+        VERARBEITUNGSFEHLER.append(fehlermeldung)
+        return None
 
-    # 📄 Gib als 'DataFrame mit 1 Textspalte' zurück – für manuelle Prüfung oder Nachverarbeitung
+    # Entferne GPT-Formatierung wie ```csv ... ```
+    if "```" in csv_text:
+        csv_text = csv_text.replace("```csv", "").replace("```", "").strip()
+
+    # Zeilen aufbereiten
+    lines = [line.strip() for line in csv_text.splitlines() if line.strip()]
+
+    # Prüfen ob erste Zeile Header ist
+    header_ist_korrekt = lines and "artikelbezeichnung" in lines[0].lower()
+
+    if not header_ist_korrekt:
+        print(f"⚠️ Kein valider Header erkannt – Ersetze durch Standard-Header in {dateiname}")
+        standard_header = "Artikelbezeichnung;Menge;Einheit;Einzelpreis;Gesamtpreis;Lieferant;Rechnungsdatum;Rechnungsempfänger;Rechnungsnummer"
+        lines.insert(0, standard_header)
+
     try:
-        df = pd.DataFrame({"GPT_Rohtext": [csv_text], "Dateiname": [dateiname]})
+        df = pd.read_csv(StringIO("\n".join(lines)), sep=";", engine="python", on_bad_lines="skip")
+        if df.empty or "Artikelbezeichnung" not in df.columns:
+            raise ValueError("Leeres oder ungültiges DataFrame")
+        df["Dateiname"] = dateiname
         return df
     except Exception as e:
-        fehlermeldung = f"❌ Fehler beim Erzeugen des Rohtext-DataFrames ({dateiname}): {e}"
+        fehlermeldung = f"❌ Fehler beim Parsen von GPT-CSV ({dateiname}): {e}"
         print(fehlermeldung)
         VERARBEITUNGSFEHLER.append(fehlermeldung)
         return None
+
+
 
 def plausibilitaet_pruefen(df):
     def bewerte_zeile(row):
@@ -688,39 +706,35 @@ def hauptprozess():
             move_with_folder(pdf_path, bereits_verarbeitet_ordner, dateiname)
             speichere_verarbeitete_datei(dateiname)
             continue
-       
         ist_lesbar = pdf_hat_nutzbaren_text(pdf_path)
         print(f"🔍 Textlayer vorhanden: {'JA' if ist_lesbar else 'NEIN'}")
-
-        text = extrahiere_text_aus_pdf(pdf_path)
-        text_ok = len(text.strip()) >= 100 and not text.strip().startswith("VL<?LHH")
-
-        if not ist_lesbar or not text_ok:
-            print("⚠️ Kein brauchbarer Text erkannt – wechsle zu GPT-OCR")
+        if not ist_lesbar:
             b64 = konvertiere_erste_seite_zu_base64(pdf_path)
             if not b64:
                 print("⚠️ Kein OCR möglich → verschoben.")
-                print("")
+                print("")  # ✅ NEU: Leerzeile vor continue
                 move_with_folder(pdf_path, problemordner, f"unlesbar_{dateiname}")
                 speichere_verarbeitete_datei(dateiname)
                 probleme += 1
                 continue
-            print("🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)")
             klassifikation = gpt_klassifikation(image_b64=b64)
+            print("🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)")
             text = gpt_abfrage_ocr_text(b64)
-            if not text.strip():
-                print("⚠️ OCR lieferte keinen brauchbaren Text → Problemrechnungen")
-                move_with_folder(pdf_path, problemordner, f"OCR_unbrauchbar_{dateiname}")
-                speichere_verarbeitete_datei(dateiname)
-                probleme += 1
-                continue
+            dauer = time.time() - start
+            print(f"✅ Fertig in {dauer:.1f}s")
+            print("")  # ➕ neue Leerzeile nach OCR/Textverarbeitung
             verfahren = "gpt-ocr"
             anzahl_ocr += 1
+            dauer_ocr += dauer
         else:
-            print("🔠 Starte GPT-Klassifikation auf Textbasis")
             klassifikation = gpt_klassifikation(text_path=pdf_path)
+            print("🔠 Starte GPT-Klassifikation auf Textbasis")
+            text = extrahiere_text_aus_pdf(pdf_path)
+            dauer = time.time() - start
+            print(f"✅ Fertig in {dauer:.1f}s")
             verfahren = "text"
             anzahl_text += 1
+            dauer_text += dauer
         if klassifikation != "rechnung":
             print(f"📄 Dokumenttyp: {klassifikation}")
             print("")
@@ -730,29 +744,10 @@ def hauptprozess():
             print(f"❌ Nicht-Rechnung → verschoben nach: {klassifikation}_{dateiname}")
             print("")
             continue
-        print("📤 Sende Bild direkt an GPT zur Inhaltsextraktion …")
-        if verfahren == "gpt-ocr":
-            if not b64:
-                print("❌ Kein Bild für GPT-OCR vorhanden → Problemrechnungen")
-                move_with_folder(pdf_path, problemordner, f"fehlendes_bild_{dateiname}")
-                speichere_verarbeitete_datei(dateiname)
-                probleme += 1
-                continue
-            print("📤 Sende Bild an GPT zur Inhaltsextraktion …")
-            antwort = gpt_abfrage_inhalt(b64_image=b64)
-        else:
-            print("📤 Sende Text an GPT zur Inhaltsextraktion …")
-            antwort = gpt_abfrage_inhalt(text=text)
-
-        if not antwort or len(antwort.strip()) < 20:
-            print("⚠️ GPT-Antwort zu kurz oder leer → Problemrechnungen")
-            move_with_folder(pdf_path, problemordner, f"Tabelle_fehlt_{dateiname}")
-            speichere_verarbeitete_datei(dateiname)
-            probleme += 1
-            continue
-
+        print("📤 Sende Text zur GPT-Inhaltsextraktion …")
+        antwort = gpt_abfrage_inhalt(text=text)
         if antwort.strip().lower().startswith("fehler"):
-            print("⚠️ GPT-Inhaltsextraktion meldet Fehler → Problemrechnungen")
+            print("⚠️ GPT-Inhaltsextraktion fehlgeschlagen → Problemrechnungen")
             print("")
             move_with_folder(pdf_path, problemordner, f"GPT_Fehler_{dateiname}")
             speichere_verarbeitete_datei(dateiname)
@@ -771,7 +766,6 @@ def hauptprozess():
         df["Dokumententyp"] = klassifikation
         df["Klassifikation_vor_Plausibilitaet"] = klassifikation
         df["Verfahren"] = verfahren
-        dauer = time.time() - start
         df["Verarbeitung_Dauer"] = round(dauer, 2)
         df["Zugehörigkeit"] = erkenne_zugehoerigkeit(text)
         alle_dfs.append(df)

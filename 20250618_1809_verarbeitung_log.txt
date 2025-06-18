@@ -1,0 +1,20 @@
+💾 Logging aktiv: 20250618_1809_verarbeitung_log.txt
+🧪 Aktive Version: Patchstand 20250618_1445
+🔍 Starte Verarbeitung mit Zwischenspeicherung und Batch-Limit...
+📂 2 Dateien gefunden.
+
+════════════════════════════════════════════════════════════
+➞️ 1/2: D224025047000301.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: JA
+🔠 Starte GPT-Klassifikation auf Textbasis
+📤 Sende Bild direkt an GPT zur Inhaltsextraktion …
+
+❌ Unerwarteter Abbruch im Hauptprozess:
+   cannot access local variable 'b64' where it is not associated with a value
+
+🧾 Zusammenfassung nach Skriptlauf:
+⚠️ Es sind folgende Fehler aufgetreten:
+Hauptprozess-Abbruch: cannot access local variable 'b64' where it is not associated with a value
+
+📋 Bitte behebe die Fehler und starte das Skript erneut.

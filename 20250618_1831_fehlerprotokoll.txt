@@ -1,0 +1,4 @@
+🧾 Fehlerprotokoll mit vollständigen Tracebacks:
+
+Hauptprozess-Abbruch: name 'dauer' is not defined
+

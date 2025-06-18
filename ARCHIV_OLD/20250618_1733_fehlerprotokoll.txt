@@ -1,0 +1,12 @@
+🧾 Fehlerprotokoll mit vollständigen Tracebacks:
+
+❌ CSV-Parsing abgebrochen: Antwort enthält keine tabellarischen Daten (kein ';') für Tabelle_unbrauchbar_sonstiges_DE500CGO4GWVVI.pdf
+
+❌ CSV-Parsing abgebrochen: Antwort enthält keine tabellarischen Daten (kein ';') für Tabelle_unbrauchbar_sonstiges_DE56GWMABEC.pdf
+
+Base64-Bild von erster PDF-Seite fehlgeschlagen (C:\Users\Sascha.Detke\OneDrive - Seier Gruppe\Dokumente\RechnungsExtraktionKI\zu_verarbeiten\unlesbar_um den dokumenttyp korrekt zu klassifizieren, benötige ich den inhalt oder eine beschreibung des dokuments. bitte teile mir einige details oder den text des dokuments mit, damit ich eine genaue klassifizierung vornehmen kann._DE521TOFABEI.pdf): Unable to get page count.
+I/O Error: Couldn't open file 'C:/Users/Sascha.Detke/OneDrive - Seier Gruppe/Dokumente/RechnungsExtraktionKI/zu_verarbeiten/unlesbar_um den dokumenttyp korrekt zu klassifizieren, ben<c3><b6>tige ich den inhalt oder eine beschreibung des dokuments. bitte teile mir einige details oder den text des dokuments mit, damit ich eine genaue klassifizierung vornehmen kann._DE521TOFABEI.pdf': No error.
+
+
+Hauptprozess-Abbruch: [WinError 123] Die Syntax für den Dateinamen, Verzeichnisnamen oder die Datenträgerbezeichnung ist falsch
+

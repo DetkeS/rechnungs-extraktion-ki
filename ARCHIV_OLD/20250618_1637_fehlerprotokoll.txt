@@ -1,0 +1,6 @@
+🧾 Fehlerprotokoll mit vollständigen Tracebacks:
+
+CSV-Parsing fehlgeschlagen: Kein valider CSV-Header in D224025047000301.pdf
+
+CSV-Parsing fehlgeschlagen: Kein valider CSV-Header in DE_25022865_073835.pdf
+

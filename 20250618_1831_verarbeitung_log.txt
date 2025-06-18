@@ -1,0 +1,24 @@
+💾 Logging aktiv: 20250618_1831_verarbeitung_log.txt
+🧪 Aktive Version: Patchstand 20250618_1445
+🔍 Starte Verarbeitung mit Zwischenspeicherung und Batch-Limit...
+📂 3 Dateien gefunden.
+
+════════════════════════════════════════════════════════════
+➞️ 1/3: DE51BNOM9AEUI.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: NEIN
+⚠️ Kein brauchbarer Text erkannt – wechsle zu GPT-OCR
+🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)
+📤 Sende Bild direkt an GPT zur Inhaltsextraktion …
+📤 Sende Bild an GPT zur Inhaltsextraktion …
+✅ Starte Plausibilitätsprüfung der Tabelle …
+
+
+❌ Unerwarteter Abbruch im Hauptprozess:
+   name 'dauer' is not defined
+
+🧾 Zusammenfassung nach Skriptlauf:
+⚠️ Es sind folgende Fehler aufgetreten:
+Hauptprozess-Abbruch: name 'dauer' is not defined
+
+📋 Bitte behebe die Fehler und starte das Skript erneut.

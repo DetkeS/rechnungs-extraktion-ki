@@ -1,0 +1,12 @@
+🧾 Fehlerprotokoll mit vollständigen Tracebacks:
+
+CSV-Parsing fehlgeschlagen: Kein valider CSV-Header in sonstiges_DE500CGO4GWVVI.pdf
+
+CSV-Parsing fehlgeschlagen: Kein valider CSV-Header in sonstiges_DE521XWGABEI.pdf
+
+CSV-Parsing fehlgeschlagen: Kein valider CSV-Header in sonstiges_DE56GWMABEC.pdf
+
+Base64-Bild von erster PDF-Seite fehlgeschlagen (C:\Users\Sascha.Detke\OneDrive - Seier Gruppe\Dokumente\RechnungsExtraktionKI\zu_verarbeiten\um den dokumenttyp korrekt zu klassifizieren, benötige ich den inhalt oder eine beschreibung des dokuments. bitte teile mir einige details oder den text des dokuments mit, damit ich eine genaue klassifizierung vornehmen kann._DE521TOFABEI.pdf): Unable to get page count.
+I/O Error: Couldn't open file 'C:/Users/Sascha.Detke/OneDrive - Seier Gruppe/Dokumente/RechnungsExtraktionKI/zu_verarbeiten/um den dokumenttyp korrekt zu klassifizieren, ben<c3><b6>tige ich den inhalt oder eine beschreibung des dokuments. bitte teile mir einige details oder den text des dokuments mit, damit ich eine genaue klassifizierung vornehmen kann._DE521TOFABEI.pdf': No error.
+
+

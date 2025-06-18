@@ -1,0 +1,20 @@
+🧾 Fehlerprotokoll mit vollständigen Tracebacks:
+
+❌ CSV-Parsing abgebrochen: Antwort enthält keine tabellarischen Daten (kein ';') für D224025014006377.pdf
+
+❌ CSV-Parsing abgebrochen: Antwort enthält keine tabellarischen Daten (kein ';') für D224025047000301.pdf
+
+❌ CSV-Parsing abgebrochen: Antwort enthält keine tabellarischen Daten (kein ';') für DE500CGO4GWVVI.pdf
+
+❌ CSV-Parsing abgebrochen: Antwort enthält keine tabellarischen Daten (kein ';') für DE51BNOM9AEUI.pdf
+
+❌ CSV-Parsing abgebrochen: Antwort enthält keine tabellarischen Daten (kein ';') für DE520WJXABEI.pdf
+
+❌ CSV-Parsing abgebrochen: Antwort enthält keine tabellarischen Daten (kein ';') für DE521TOFABEI.pdf
+
+❌ CSV-Parsing abgebrochen: Antwort enthält keine tabellarischen Daten (kein ';') für DE52A9Q4ABEI.pdf
+
+❌ CSV-Parsing abgebrochen: Antwort enthält keine tabellarischen Daten (kein ';') für DE56GWMABEC.pdf
+
+❌ CSV-Parsing abgebrochen: Antwort enthält keine tabellarischen Daten (kein ';') für DE_25022865_073835.pdf
+

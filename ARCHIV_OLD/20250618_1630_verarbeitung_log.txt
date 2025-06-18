@@ -1,0 +1,32 @@
+💾 Logging aktiv: 20250618_1630_verarbeitung_log.txt
+🧪 Aktive Version: Patchstand 20250618_1445
+🔍 Starte Verarbeitung mit Zwischenspeicherung und Batch-Limit...
+📂 1 Dateien gefunden.
+
+════════════════════════════════════════════════════════════
+➞️ 1/1: unbekannt_DE5204XXABEI.pdf
+🛂 Starte Vorprüfung der Datei
+🔍 Textlayer vorhanden: NEIN
+🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)
+✅ Fertig in 4.5s
+
+📄 Dokumenttyp: sonstiges
+
+❌ Nicht-Rechnung → verschoben nach: sonstiges_unbekannt_DE5204XXABEI.pdf
+
+⚠️ Keine Batchdateien zum Zusammenführen gefunden.
+
+
+════════════════════════════════════════════════════════════
+🌟 Verarbeitung beendet: 1 Dateien in 5.0s
+
+📊 Verarbeitungsstatistik:
+
+📜 Ø/Datei: 5.04s
+📄 Textbasiert: 0 (0.0%), Ø 0.00s
+🧠 GPT-OCR: 1 (100.0%), Ø 4.45s
+❌ Nicht-Rechnungen: 1 (100.0%)
+⚠️ Probleme: 0 (0.0%)
+
+🧾 Zusammenfassung nach Skriptlauf:
+✅ Keine kritischen Fehler. Der Lauf war erfolgreich.

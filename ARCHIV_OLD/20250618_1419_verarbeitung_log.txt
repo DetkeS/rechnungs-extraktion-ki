@@ -1,0 +1,35 @@
+💾 Logging aktiv: 20250618_1419_verarbeitung_log.txt
+🔍 Starte Verarbeitung mit Zwischenspeicherung und Batch-Limit...
+📂 3 Dateien gefunden.
+➞️ 1/3: unbekannt_DE5204XXABEI.pdf
+🛂 Starte Vorprüfung der Datei
+⏭️ Bereits verarbeitet.
+➞️ 2/3: unbekannt_DE5204YVABEI.pdf
+🛂 Starte Vorprüfung der Datei
+⏭️ Bereits verarbeitet.
+➞️ 3/3: unbekannt_DE5292THABEI.pdf
+🛂 Starte Vorprüfung der Datei
+⏭️ Bereits verarbeitet.
+🔧 Harmonisiere Einheiten & Artikelbezeichnungen mit Mapping + Logging ...
+📄 Mapping-Datei geladen: mein_mapping.xlsx
+📝 1 unbekannte Einheiten gespeichert in: C:\Users\Sascha.Detke\OneDrive - Seier Gruppe\Dokumente\RechnungsExtraktionKI\20250618_1419_einheiten_log.xlsx
+🧠 Formatiere und korrigiere Zahlen …
+🧠 GPT: Kategorisiere Artikel global mit Log-Wiederverwendung …
+❌ Fehler in 'Kategorisierung': 'Kategorie'
+
+
+════════════════════════════════════════════════════════════
+🌟 Verarbeitung beendet: 0 Dateien in 0.6s
+
+📊 Verarbeitungsstatistik:
+
+
+🧾 Zusammenfassung nach Skriptlauf:
+⚠️ Es sind folgende Fehler aufgetreten:
+ - ❌ Fehler in 'Kategorisierung': 'Kategorie'
+ - ❌ Kategorisierung schlug fehl. Verarbeitung abgebrochen.
+
+📋 Bitte behebe die Fehler und starte das Skript erneut.
+
+❌ Kritischer Fehler erkannt: Verarbeitung wurde bewusst abgebrochen.
+📋 Bitte Ursache beheben (siehe fehlerprotokoll.txt), dann erneut starten.

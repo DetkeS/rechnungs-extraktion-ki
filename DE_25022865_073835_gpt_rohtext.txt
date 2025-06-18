@@ -1,0 +1,40 @@
+Um die Informationen aus einer Rechnung zu extrahieren, benötige ich den Text oder ein Bild der Rechnung, um die relevanten Details zu identifizieren. Da ich keinen direkten Zugriff auf Dokumente oder Bilder habe, kann ich nur allgemeine Hinweise geben, welche Informationen typischerweise auf einer Rechnung zu finden sind:
+
+1. **Lieferant:**
+   - Name des Unternehmens
+   - Adresse
+   - Kontaktinformationen (Telefonnummer, E-Mail-Adresse)
+   - Umsatzsteuer-Identifikationsnummer (falls vorhanden)
+
+2. **Rechnungsempfänger:**
+   - Name des Empfängers (Unternehmen oder Person)
+   - Adresse
+   - Kontaktinformationen (falls vorhanden)
+
+3. **Rechnungsnummer:**
+   - Eindeutige Identifikationsnummer der Rechnung
+
+4. **Rechnungsdatum:**
+   - Datum, an dem die Rechnung ausgestellt wurde
+
+5. **Artikelpositionen:**
+   - Beschreibung der gelieferten Waren oder Dienstleistungen
+   - Menge
+   - Einzelpreis
+   - Gesamtpreis pro Position
+
+6. **Gesamtbetrag:**
+   - Gesamtsumme der Rechnung
+   - Eventuell enthaltene Steuern (z.B. Mehrwertsteuer)
+   - Endbetrag inklusive Steuern
+
+7. **Zahlungsinformationen:**
+   - Bankverbindung des Lieferanten
+   - Zahlungsbedingungen (z.B. Zahlungsziel, Skonto)
+
+8. **Weitere Informationen:**
+   - Bestellnummer oder Referenznummer (falls vorhanden)
+   - Lieferdatum oder Leistungszeitraum
+   - Sonstige Hinweise oder Anmerkungen
+
+Bitte stelle sicher, dass du die relevanten Informationen aus dem Dokument bereitstellst, damit ich spezifische Details extrahieren kann.

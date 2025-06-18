@@ -1,0 +1,4 @@
+🧾 Fehlerprotokoll mit vollständigen Tracebacks:
+
+Hauptprozess-Abbruch: cannot access local variable 'b64' where it is not associated with a value
+

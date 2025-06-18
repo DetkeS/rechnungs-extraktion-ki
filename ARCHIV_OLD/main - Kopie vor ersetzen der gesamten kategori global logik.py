@@ -28,27 +28,29 @@ from io import BytesIO        # für temporären Bildspeicher (PNG in base64)
 # 🧠 OpenAI API
 import openai                  # GPT-Modelle aufrufen (z. B. für Klassifikation, OCR, Kategorisierung)
 from dotenv import load_dotenv  # .env-Dateien lesen für sichere API-Key-Verwaltung
-from openai import OpenAI  # ✅ neue Client-API für openai>=1.0
 
 # 🔐 API-Key aus .env-Datei laden (nicht im Code sichtbar speichern)
 # 🔄 Lade Umgebungsvariablen aus .env-Datei (muss im Hauptverzeichnis liegen)
 load_dotenv()
-# 📌 API-Key laden und an OpenAI-Client übergeben (für SDK ≥ 1.0)
-api_key = os.getenv("OPENAI_API_KEY")
-if not api_key:
+
+# 📌 Setze den OpenAI-API-Key aus Umgebungsvariable
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# 🧱 Kritischer Check – Skript soll sofort abbrechen, wenn kein Key vorhanden ist
+if not openai.api_key:
     print("❌ Kritischer Fehler: OPENAI_API_KEY nicht gesetzt.")
     print("ℹ️  Bitte prüfe deine .env-Datei oder setze den API-Key manuell.")
     print("📋 Skript wird aus Sicherheitsgründen abgebrochen.")
+    
+    # Optional: Logging ins Fehlerprotokoll (falls global schon existiert)
     try:
-        fehlerlog_datei = output_excel.parent / f"{zeitstempel}_fehlerprotokoll.txt"
-        with open(fehlerlog_datei, "a", encoding="utf-8") as f:
+        with open("fehlerprotokoll.txt", "a", encoding="utf-8") as f:
             f.write("❌ Kein OpenAI API-Key gefunden – kritischer Abbruch.\n")
     except Exception:
         pass
-    sys.exit(1)
 
-# 🧠 GPT-Client initialisieren
-client = OpenAI(api_key=api_key)
+    import sys
+    sys.exit(1)  # 🔚 Sofortiger, harter Abbruch
 
 # 📁 Pfade & Dateinamen (werden beim Start automatisch erstellt)
 basisverzeichnis = Path(__file__).resolve().parent            # Hauptverzeichnis der Skriptdatei
@@ -202,7 +204,7 @@ def pdf_hat_nutzbaren_text(pdf_path, min_verwertbar=80):
     try:
         doc = fitz.open(pdf_path)
         text = "".join([page.get_text() for page in doc])
-        return len(text.strip()) >= 50 and not text.startswith("VL<?LHH")
+        return len(text.strip()) >= min_verwertbar and not text.startswith("VL<?LHH")
     except Exception as e:
         fehlermeldung = f"Fehler beim PDF-Vorfilter für {pdf_path}: {e}"
         print(fehlermeldung)
@@ -216,19 +218,11 @@ def pdf_hat_nutzbaren_text(pdf_path, min_verwertbar=80):
 def gpt_klassifikation(text_path=None, image_b64=None):
     if image_b64:
         prompt = (
-            "Du erhältst ein Bild eines Geschäftsdokuments (z. B. Rechnung, Gutschrift, Anschreiben, Mahnung).\n"
-            "Bitte klassifiziere das Dokument eindeutig anhand typischer Begriffe oder Layoutstruktur.\n\n"
-            "Typen zur Auswahl:\n"
-            "- rechnung (z. B. 'Rechnung', 'Rechnungsnummer', 'Zahlbetrag', 'USt.')\n"
-            "- gutschrift (z. B. 'Gutschrift', 'Rechnungskorrektur', 'Erstattung')\n"
-            "- mahnung (z. B. 'Mahnung', 'letzte Erinnerung')\n"
-            "- zahlungserinnerung\n"
-            "- anschreiben\n"
-            "- email\n"
-            "- behördlich\n"
-            "- sonstiges\n\n"
-            "Achte besonders auf Begriffe oben rechts oder in der Kopfzeile.\n"
-            "Antworte ausschließlich mit **einem** dieser Begriffe."
+            "Du erhältst ein Bild eines Dokuments.\n"
+            "Bitte klassifiziere den Dokumenttyp als einen der folgenden Begriffe:\n"
+            "- rechnung\n- mahnung\n- anschreiben\n- email\n- gutschrift\n"
+            "- zahlungserinnerung\n- behördlich\n- sonstiges\n\n"
+            "Antworte ausschließlich mit einem dieser Begriffe."
         )
         messages = [{
             "role": "user",
@@ -248,12 +242,10 @@ def gpt_klassifikation(text_path=None, image_b64=None):
             return "unlesbar"
 
         prompt = (
-            "Analysiere den folgenden extrahierten Text eines Geschäftsdokuments und gib **genau einen** der folgenden Dokumenttypen zurück:\n\n"
-            "- rechnung (z. B. mit 'Rechnung', 'Rechnungsnummer', 'USt.', 'Zahlbetrag')\n"
-            "- gutschrift (z. B. mit 'Gutschrift', 'Rechnungskorrektur', 'Erstattung')\n"
-            "- mahnung\n- zahlungserinnerung\n- anschreiben\n- email\n- behördlich\n- sonstiges\n\n"
-            "Wenn der Text mehrere Begriffe enthält, wähle den eindeutigsten und plausibelsten Typ.\n"
-            "Antwort nur mit dem Begriff.\n\n"
+            "Analysiere den folgenden Text und gib exakt einen Dokumenttyp zurück:\n"
+            "- rechnung\n- mahnung\n- anschreiben\n- email\n- gutschrift\n"
+            "- zahlungserinnerung\n- behördlich\n- sonstiges\n\n"
+            "Wichtig: Wenn unklar, schätze.\n\n"
             f"{extracted_text[:3000]}"
         )
         messages = [{"role": "user", "content": prompt}]
@@ -264,10 +256,10 @@ def gpt_klassifikation(text_path=None, image_b64=None):
         return "fehler"
 
     try:
-        response = client.chat.completions.create(
+        response = openai.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3
+            messages=messages,
+            temperature=0
         )
         return response.choices[0].message.content.strip().lower()
     except Exception as e:
@@ -284,10 +276,10 @@ def korrigiere_zahl_mit_gpt(wert):
     Wert: {wert}
     """
     try:
-        response = client.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.3
+            temperature=0
         )
         result = response.choices[0].message.content.strip()
         return float(result)
@@ -311,10 +303,10 @@ def gpt_abfrage_ocr_text(b64_image):
     }]
 
     try:
-        response = client.chat.completions.create(
+        response = openai.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3
+            messages=messages,
+            temperature=0.2
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -325,10 +317,10 @@ def gpt_abfrage_ocr_text(b64_image):
 
 def gpt_abfrage_inhalt(text=None, b64_image=None):
     prompt = (
-        "Extrahiere so viele Informationen wie möglich aus dieser Rechnung.\n"
-        "Gib alle Artikelpositionen und Metadaten wie Lieferant, Empfänger, Rechnungsnummer, Datum etc. im freien Klartext aus.\n"
-        "Es ist nicht notwendig, eine Tabelle oder CSV zu erstellen.\n"
-        "Gib einfach den reinen Inhalt strukturiert zurück – zeilenweise, ohne Kommentare oder Erklärungen.\n"
+        "Extrahiere alle Artikelpositionen aus dieser Rechnung in folgender CSV-Struktur:\n"
+        "Artikelbezeichnung;Menge;Einheit;Einzelpreis;Gesamtpreis;Lieferant;Rechnungsdatum;Rechnungsempfänger;Rechnungsnummer\n"
+        "Gib ausschließlich die Tabelle als CSV mit Semikolon-Trennung zurück.\n"
+        "WICHTIG: Gib KEINE fiktiven Daten an. Wenn keine Daten enthalten sind, gib eine leere Tabelle zurück.\n"
         "Extrahiere den Rechnungsempfänger aus dem Adressfeld des Dokuments, an den das Schreiben adressiert wurde."
     )
 
@@ -340,10 +332,10 @@ def gpt_abfrage_inhalt(text=None, b64_image=None):
         messages[0]["content"].append({"type": "text", "text": text[:4000]})
 
     try:
-        response = client.chat.completions.create(
+        response = openai.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3
+            messages=messages,
+            temperature=0.2
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -353,47 +345,49 @@ def gpt_abfrage_inhalt(text=None, b64_image=None):
         return ""
 
 def kategorisiere_artikel_global(df):
-    print("🧠 Starte globale Artikel-Kategorisierung mit GPT und Log-Wiederverwendung …")
+    print("🧠 GPT: Kategorisiere Artikel global mit Log-Wiederverwendung …")
 
     artikel = df["Artikelbezeichnung"].dropna().unique()
     artikel_clean = pd.Series(artikel).astype(str).str.strip().str.lower()
-    artikel_set = pd.DataFrame({"Artikelbezeichnung": artikel, "clean": artikel_clean})
 
-    # 🗂 Kategorielogs laden
+    # Lade alte Logs
     vorhandene_logs = sorted(Path(output_excel.parent).glob("kategorielog_*.xlsx"))
     treffer_alt = pd.DataFrame()
+
     for log_path in reversed(vorhandene_logs):
+        # Kategorielogs gegen Fehler absichern - robuste Varienate (18.06.25 SD)
         try:
             log_df = pd.read_excel(log_path)
-            if {"Artikelbezeichnung", "Kategorie", "Unterkategorie"}.issubset(log_df.columns):
-                log_df["clean"] = log_df["Artikelbezeichnung"].astype(str).str.strip().str.lower()
-                log_df = log_df[["Artikelbezeichnung", "Kategorie", "Unterkategorie", "clean"]].drop_duplicates()
-                treffer_alt = pd.concat([treffer_alt, log_df], ignore_index=True)
-            else:
-                print(f"⚠️ Unvollständiger Log – wird ignoriert: {log_path.name}")
-        except Exception as e:
-            print(f"⚠️ Fehler beim Lesen eines Logs ({log_path.name}): {e}")
 
-    if treffer_alt.empty or not {"Kategorie", "Unterkategorie", "clean"}.issubset(treffer_alt.columns):
-        print("ℹ️ Keine brauchbaren Kategorielogs – GPT wird vollständig verwendet.")
-        reuse_df = pd.DataFrame(columns=["Artikelbezeichnung", "Kategorie", "Unterkategorie", "Herkunft"])
-    else:
-        try:
-            treffer_alt = treffer_alt[
-                ~treffer_alt["Kategorie"].str.lower().isin(["sonstiges", "fehler", "unbekannt"]) &
-                ~treffer_alt["Unterkategorie"].str.lower().isin(["unklar", "unbekannt"])
-            ]
-            reuse_df = artikel_set.merge(treffer_alt, on="clean", how="inner").drop_duplicates("Artikelbezeichnung")
-            reuse_df["Herkunft"] = "reuse"
-        except Exception as e:
-            print(f"⚠️ Wiederverwendung fehlgeschlagen: {e}")
-            reuse_df = pd.DataFrame(columns=["Artikelbezeichnung", "Kategorie", "Unterkategorie", "Herkunft"])
+            required_cols = {"Artikelbezeichnung", "Kategorie", "Unterkategorie"}
+            if not required_cols.issubset(log_df.columns):
+                print(f"⚠️ Log-Datei übersprungen (fehlende Spalten): {log_path.name}")
+                continue
 
-    # 🧠 GPT für neue Begriffe
-    bekannte = reuse_df["Artikelbezeichnung"] if not reuse_df.empty else []
-    gpt_df = artikel_set[~artikel_set["Artikelbezeichnung"].isin(bekannte)]
+            log_df["clean"] = log_df["Artikelbezeichnung"].astype(str).str.strip().str.lower()
+            log_df = log_df[["Artikelbezeichnung", "Kategorie", "Unterkategorie", "clean"]].drop_duplicates()
+            treffer_alt = pd.concat([treffer_alt, log_df], ignore_index=True)
+        except Exception as e:
+            print(f"⚠️ Fehler beim Verarbeiten eines Logs ({log_path.name}): {e}")
+            continue
+
+    # Entferne schlechte Kategorien
+    treffer_alt = treffer_alt[
+        ~treffer_alt["Kategorie"].str.lower().isin(["sonstiges", "fehler", "unbekannt"])
+        & ~treffer_alt["Unterkategorie"].str.lower().isin(["unklar", "unbekannt"])
+    ]
+
+    # Trenne bekannte und neue Begriffe
+    artikel_set = pd.DataFrame({"Artikelbezeichnung": artikel, "clean": artikel_clean})
+    reuse_df = artikel_set.merge(treffer_alt, on="clean", how="inner").drop_duplicates("Artikelbezeichnung")
+    gpt_df = artikel_set[~artikel_set["Artikelbezeichnung"].isin(reuse_df["Artikelbezeichnung"])]
+
+    print(f"🔁 Wiederverwendete Kategorien: {len(reuse_df)}")
+    print(f"🧠 Neue GPT-Kategorisierung für: {len(gpt_df)}")
+
     logeintraege = []
 
+    # GPT-Kategorisierung für neue Begriffe
     if not gpt_df.empty:
         prompt = (
             "Ordne den folgenden Artikeln je eine passende Haupt- und Unterkategorie zu.\n"
@@ -402,101 +396,92 @@ def kategorisiere_artikel_global(df):
             "\n".join(gpt_df["Artikelbezeichnung"])
         )
         try:
-           # ✅ NEU – Kompatibel mit openai>=1.0.0 (Client-Instanz verwenden)
-            client = OpenAI()
-            response = client.chat.completions.create(
+            response = openai.ChatCompletion.create(
                 model="gpt-4o",
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.3
+                temperature=0.2
             )
             antwort = response['choices'][0]['message']['content'].strip()
             lines = [line for line in antwort.splitlines() if ";" in line]
             cat_gpt = pd.read_csv(StringIO("\n".join(lines)), sep=";", engine="python", on_bad_lines="skip")
             cat_gpt["Herkunft"] = "gpt"
         except Exception as e:
-            fehlermeldung = f"GPT-Kategorisierung fehlgeschlagen: {e}"
-            print(f"⚠️ {fehlermeldung}")
+            fehlermeldung = f"GPT-Fehler bei Kategorisierung: {e}"
+            print(fehlermeldung)
             VERARBEITUNGSFEHLER.append(fehlermeldung)
             cat_gpt = pd.DataFrame(columns=["Artikelbezeichnung", "Hauptkategorie", "Unterkategorie", "Herkunft"])
     else:
         cat_gpt = pd.DataFrame(columns=["Artikelbezeichnung", "Hauptkategorie", "Unterkategorie", "Herkunft"])
 
-   # 🧩 Vereinheitlichung & Zusammenführung
-    if not reuse_df.empty and "Kategorie" in reuse_df.columns:
-        reuse_df = reuse_df.rename(columns={"Kategorie": "Hauptkategorie"})
-    elif not reuse_df.empty:
-        fehlermeldung = "⚠️ 'Kategorie'-Spalte fehlt in reuse_df – keine Umbenennung möglich"
-        print(fehlermeldung)
-        VERARBEITUNGSFEHLER.append(fehlermeldung)
+    # Ergänze Herkunft zu reuse-Daten
+    if not reuse_df.empty:
+        reuse_df["Herkunft"] = "reuse"
+        reuse_df.rename(columns={"Kategorie": "Hauptkategorie"}, inplace=True)
 
-    # ✅ Spaltenprüfung vor concat
-    gewuenschte_spalten = ["Artikelbezeichnung", "Hauptkategorie", "Unterkategorie", "Herkunft"]
-    fehlen = [col for col in reuse_df.columns if col not in gewuenschte_spalten]
+    # Kombiniere alles
+    gesamt_kat = pd.concat([reuse_df[["Artikelbezeichnung", "Hauptkategorie", "Unterkategorie", "Herkunft"]], cat_gpt], ignore_index=True)
 
-    if fehlen:
-        fehlermeldung = f"⚠️ Spalten fehlen in reuse_df: {fehlen} – es wird ein leeres DataFrame verwendet"
-        print(fehlermeldung)
-        VERARBEITUNGSFEHLER.append(fehlermeldung)
-        reuse_df = pd.DataFrame(columns=gewuenschte_spalten)
-
-    gesamt_kat = pd.concat(
-        [reuse_df[gewuenschte_spalten], cat_gpt],
-        ignore_index=True
-    )
-    # 🧬 Merge in Originaldaten
+    # ➕ Merge Kategoriedaten in den Haupt-DataFrame
     df = df.merge(gesamt_kat, on="Artikelbezeichnung", how="left")
+    
+    # 🛡️ Abbruch, wenn keine Kategorien erzeugt wurden
+    if gesamt_kat.empty:
+        raise ValueError("Kategorisierung fehlgeschlagen: keine Kategorien verfügbar (reuse + GPT leer)")
+
+    # 🛡️ Sicherer Rename nur bei vorhandener Spalte
     if "Hauptkategorie" in df.columns:
         df.rename(columns={"Hauptkategorie": "Kategorie"}, inplace=True)
     else:
-        fehlermeldung = "❌ Spalte 'Hauptkategorie' fehlt – Merge fehlgeschlagen."
-        print(fehlermeldung)
+        fehlermeldung = (
+            "Spalte 'Hauptkategorie' fehlt nach Merge – vermutlich keine gültige "
+            "Kategorisierung erzeugt oder keine Übereinstimmungen mit Artikelbezeichnungen."
+        )
+        print(f"❌ {fehlermeldung}")
         VERARBEITUNGSFEHLER.append(fehlermeldung)
         raise ValueError(fehlermeldung)
 
-    if "Kategorie" not in df.columns:
-        raise ValueError("Spalte 'Kategorie' fehlt – Kategorisierung unvollständig")
-
-    # 📝 Log-Einträge vorbereiten
+    # Baue Log
     for _, row in gesamt_kat.iterrows():
         logeintraege.append({
             "Artikelbezeichnung": row["Artikelbezeichnung"],
-            "Kategorie": row["Hauptkategorie"],
+            "Kategorie": row["Kategorie"],
             "Unterkategorie": row["Unterkategorie"],
             "Herkunft": row["Herkunft"],
             "Zeitpunkt": datetime.now()
         })
 
-    if not logeintraege:
-        print("⚠️ Keine neuen Kategorisierungen vorgenommen – kein Kategorielog gespeichert.")
-
-    return df, logeintraege
-
+    # 🛡️ Finaler Check
+    if "Kategorie" not in df.columns:
+        raise ValueError("Spalte 'Kategorie' fehlt – Kategorisierung unvollständig")
    
+    return df, logeintraege
 # ==========================================
 # 🔢 DATENPARSING UND TRANSFORMATION
 # ==========================================
 
 def parse_csv_in_dataframe(csv_text, dateiname):
-    if not csv_text or not isinstance(csv_text, str):
-        fehlermeldung = f"❌ Parsing fehlgeschlagen: Keine oder ungültige Antwort für {dateiname}"
+    lieferanten_liste = ["Matthäi", "Eurovia", "Bauzentrum", "Remondis", "Kuhlmann", "BHK"]
+
+    if "```" in csv_text:
+        csv_text = csv_text.replace("```csv", "").replace("```", "").strip()
+
+    lines = [line for line in csv_text.splitlines() if line.strip()]
+    if not lines or ";" not in lines[0]:
+        fehlermeldung = f"CSV-Parsing fehlgeschlagen: Kein valider CSV-Header in {dateiname}"
         print(fehlermeldung)
         VERARBEITUNGSFEHLER.append(fehlermeldung)
         return None
 
-    # 💾 GPT-Antwort immer in Textdatei sichern
-    try:
-        debug_path = output_excel.parent / f"{dateiname.replace('.pdf', '')}_gpt_rohtext.txt"
-        with open(debug_path, "w", encoding="utf-8") as f:
-            f.write(csv_text)
-    except Exception as e:
-        VERARBEITUNGSFEHLER.append(f"❌ Fehler beim Speichern der GPT-Rohantwort ({dateiname}): {e}")
+    if not lines[0].lower().startswith("artikelbezeichnung"):
+        lines.insert(0, "Artikelbezeichnung;Menge;Einheit;Einzelpreis;Gesamtpreis;Lieferant;Rechnungsdatum;Rechnungsempfänger")
 
-    # 📄 Gib als 'DataFrame mit 1 Textspalte' zurück – für manuelle Prüfung oder Nachverarbeitung
     try:
-        df = pd.DataFrame({"GPT_Rohtext": [csv_text], "Dateiname": [dateiname]})
+        df = pd.read_csv(StringIO("\n".join(lines)), sep=";", engine="python", on_bad_lines="skip")
+        df["Dateiname"] = dateiname
+        df["Lieferant_unbekannt"] = ~df["Lieferant"].apply(lambda x: any(l.lower() in str(x).lower() for l in lieferanten_liste))
         return df
     except Exception as e:
-        fehlermeldung = f"❌ Fehler beim Erzeugen des Rohtext-DataFrames ({dateiname}): {e}"
+        fehlermeldung = f"Fehler beim Parsen von GPT-CSV ({dateiname}): {e}"
         print(fehlermeldung)
         VERARBEITUNGSFEHLER.append(fehlermeldung)
         return None
@@ -606,7 +591,105 @@ def harmonisiere_daten_mit_mapping(df, mapping_path=None):
         print(f"📝 {len(unbekannte)} unbekannte Einheiten gespeichert in: {log_path}")
 
     return df
-  
+    
+def kategorisiere_artikel_global(df):
+    print("🧠 GPT: Kategorisiere Artikel global mit Log-Wiederverwendung …")
+
+    artikel = df["Artikelbezeichnung"].dropna().unique()
+    artikel_clean = pd.Series(artikel).astype(str).str.strip().str.lower()
+
+    # Lade alte Logs
+    vorhandene_logs = sorted(Path(output_excel.parent).glob("kategorielog_*.xlsx"))
+    treffer_alt = pd.DataFrame()
+
+    for log_path in reversed(vorhandene_logs):
+        # Kategorielogs gegen Fehler absichern - robuste Varienate (18.06.25 SD)
+        try:
+            log_df = pd.read_excel(log_path)
+
+            required_cols = {"Artikelbezeichnung", "Kategorie", "Unterkategorie"}
+            if not required_cols.issubset(log_df.columns):
+                print(f"⚠️ Log-Datei übersprungen (fehlende Spalten): {log_path.name}")
+                continue
+
+            log_df["clean"] = log_df["Artikelbezeichnung"].astype(str).str.strip().str.lower()
+            log_df = log_df[["Artikelbezeichnung", "Kategorie", "Unterkategorie", "clean"]].drop_duplicates()
+            treffer_alt = pd.concat([treffer_alt, log_df], ignore_index=True)
+        except Exception as e:
+            print(f"⚠️ Fehler beim Verarbeiten eines Logs ({log_path.name}): {e}")
+            continue
+
+    # Entferne schlechte Kategorien
+    treffer_alt = treffer_alt[
+        ~treffer_alt["Kategorie"].str.lower().isin(["sonstiges", "fehler", "unbekannt"])
+        & ~treffer_alt["Unterkategorie"].str.lower().isin(["unklar", "unbekannt"])
+    ]
+
+    # Trenne bekannte und neue Begriffe
+    artikel_set = pd.DataFrame({"Artikelbezeichnung": artikel, "clean": artikel_clean})
+    reuse_df = artikel_set.merge(treffer_alt, on="clean", how="inner").drop_duplicates("Artikelbezeichnung")
+    gpt_df = artikel_set[~artikel_set["Artikelbezeichnung"].isin(reuse_df["Artikelbezeichnung"])]
+
+    print(f"🔁 Wiederverwendete Kategorien: {len(reuse_df)}")
+    print(f"🧠 Neue GPT-Kategorisierung für: {len(gpt_df)}")
+
+    logeintraege = []
+
+    # GPT-Kategorisierung für neue Begriffe
+    if not gpt_df.empty:
+        prompt = (
+            "Ordne den folgenden Artikeln je eine passende Haupt- und Unterkategorie zu.\n"
+            "Gib nur die CSV-Zeilen mit folgenden Spalten zurück:\n"
+            "Artikelbezeichnung;Hauptkategorie;Unterkategorie\n\n" +
+            "\n".join(gpt_df["Artikelbezeichnung"])
+        )
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2
+            ) 
+            antwort = response['choices'][0]['message']['content'].strip()
+            lines = [line for line in antwort.splitlines() if ";" in line]
+            cat_gpt = pd.read_csv(StringIO("\n".join(lines)), sep=";", engine="python", on_bad_lines="skip")
+            cat_gpt["Herkunft"] = "gpt"
+        except Exception as e:
+            fehlermeldung = f"GPT-Fehler bei Kategorisierung: {e}"
+            print(fehlermeldung)
+            VERARBEITUNGSFEHLER.append(fehlermeldung)
+            cat_gpt = pd.DataFrame(columns=["Artikelbezeichnung", "Hauptkategorie", "Unterkategorie", "Herkunft"])
+    else:
+        cat_gpt = pd.DataFrame(columns=["Artikelbezeichnung", "Hauptkategorie", "Unterkategorie", "Herkunft"])
+
+    # Ergänze Herkunft zu reuse-Daten
+    if not reuse_df.empty:
+        reuse_df["Herkunft"] = "reuse"
+        reuse_df.rename(columns={"Kategorie": "Hauptkategorie"}, inplace=True)
+
+    # Kombiniere alles
+    gesamt_kat = pd.concat([reuse_df[["Artikelbezeichnung", "Hauptkategorie", "Unterkategorie", "Herkunft"]], cat_gpt], ignore_index=True)
+    df = df.merge(gesamt_kat, on="Artikelbezeichnung", how="left")
+
+    # 🛡️ Sicherer Rename nur bei vorhandener Spalte
+    if "Hauptkategorie" in df.columns:
+        df.rename(columns={"Hauptkategorie": "Kategorie"}, inplace=True)
+    else:
+        raise ValueError("Spalte 'Hauptkategorie' fehlt nach Merge – vermutlich keine Übereinstimmungen")
+
+    # Baue Log
+    for _, row in gesamt_kat.iterrows():
+        logeintraege.append({
+            "Artikelbezeichnung": row["Artikelbezeichnung"],
+            "Kategorie": row["Hauptkategorie"],  # ✅ korrekt
+            "Unterkategorie": row["Unterkategorie"],
+            "Herkunft": row["Herkunft"],
+            "Zeitpunkt": datetime.now()
+        })
+    if "Kategorie" not in df.columns:
+        raise ValueError("Spalte 'Kategorie' fehlt – Kategorisierung unvollständig")
+   
+    return df, logeintraege
+
 def erkenne_zugehoerigkeit(text):
     lower = text.lower()
     for firma in TOCHTERFIRMEN:
@@ -688,39 +771,35 @@ def hauptprozess():
             move_with_folder(pdf_path, bereits_verarbeitet_ordner, dateiname)
             speichere_verarbeitete_datei(dateiname)
             continue
-       
         ist_lesbar = pdf_hat_nutzbaren_text(pdf_path)
         print(f"🔍 Textlayer vorhanden: {'JA' if ist_lesbar else 'NEIN'}")
-
-        text = extrahiere_text_aus_pdf(pdf_path)
-        text_ok = len(text.strip()) >= 100 and not text.strip().startswith("VL<?LHH")
-
-        if not ist_lesbar or not text_ok:
-            print("⚠️ Kein brauchbarer Text erkannt – wechsle zu GPT-OCR")
+        if not ist_lesbar:
             b64 = konvertiere_erste_seite_zu_base64(pdf_path)
             if not b64:
                 print("⚠️ Kein OCR möglich → verschoben.")
-                print("")
+                print("")  # ✅ NEU: Leerzeile vor continue
                 move_with_folder(pdf_path, problemordner, f"unlesbar_{dateiname}")
                 speichere_verarbeitete_datei(dateiname)
                 probleme += 1
                 continue
-            print("🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)")
             klassifikation = gpt_klassifikation(image_b64=b64)
+            print("🔠 Starte GPT-Klassifikation auf Bildbasis (OCR)")
             text = gpt_abfrage_ocr_text(b64)
-            if not text.strip():
-                print("⚠️ OCR lieferte keinen brauchbaren Text → Problemrechnungen")
-                move_with_folder(pdf_path, problemordner, f"OCR_unbrauchbar_{dateiname}")
-                speichere_verarbeitete_datei(dateiname)
-                probleme += 1
-                continue
+            dauer = time.time() - start
+            print(f"✅ Fertig in {dauer:.1f}s")
+            print("")  # ➕ neue Leerzeile nach OCR/Textverarbeitung
             verfahren = "gpt-ocr"
             anzahl_ocr += 1
+            dauer_ocr += dauer
         else:
-            print("🔠 Starte GPT-Klassifikation auf Textbasis")
             klassifikation = gpt_klassifikation(text_path=pdf_path)
+            print("🔠 Starte GPT-Klassifikation auf Textbasis")
+            text = extrahiere_text_aus_pdf(pdf_path)
+            dauer = time.time() - start
+            print(f"✅ Fertig in {dauer:.1f}s")
             verfahren = "text"
             anzahl_text += 1
+            dauer_text += dauer
         if klassifikation != "rechnung":
             print(f"📄 Dokumenttyp: {klassifikation}")
             print("")
@@ -730,29 +809,10 @@ def hauptprozess():
             print(f"❌ Nicht-Rechnung → verschoben nach: {klassifikation}_{dateiname}")
             print("")
             continue
-        print("📤 Sende Bild direkt an GPT zur Inhaltsextraktion …")
-        if verfahren == "gpt-ocr":
-            if not b64:
-                print("❌ Kein Bild für GPT-OCR vorhanden → Problemrechnungen")
-                move_with_folder(pdf_path, problemordner, f"fehlendes_bild_{dateiname}")
-                speichere_verarbeitete_datei(dateiname)
-                probleme += 1
-                continue
-            print("📤 Sende Bild an GPT zur Inhaltsextraktion …")
-            antwort = gpt_abfrage_inhalt(b64_image=b64)
-        else:
-            print("📤 Sende Text an GPT zur Inhaltsextraktion …")
-            antwort = gpt_abfrage_inhalt(text=text)
-
-        if not antwort or len(antwort.strip()) < 20:
-            print("⚠️ GPT-Antwort zu kurz oder leer → Problemrechnungen")
-            move_with_folder(pdf_path, problemordner, f"Tabelle_fehlt_{dateiname}")
-            speichere_verarbeitete_datei(dateiname)
-            probleme += 1
-            continue
-
+        print("📤 Sende Text zur GPT-Inhaltsextraktion …")
+        antwort = gpt_abfrage_inhalt(text=text)
         if antwort.strip().lower().startswith("fehler"):
-            print("⚠️ GPT-Inhaltsextraktion meldet Fehler → Problemrechnungen")
+            print("⚠️ GPT-Inhaltsextraktion fehlgeschlagen → Problemrechnungen")
             print("")
             move_with_folder(pdf_path, problemordner, f"GPT_Fehler_{dateiname}")
             speichere_verarbeitete_datei(dateiname)
@@ -771,7 +831,6 @@ def hauptprozess():
         df["Dokumententyp"] = klassifikation
         df["Klassifikation_vor_Plausibilitaet"] = klassifikation
         df["Verfahren"] = verfahren
-        dauer = time.time() - start
         df["Verarbeitung_Dauer"] = round(dauer, 2)
         df["Zugehörigkeit"] = erkenne_zugehoerigkeit(text)
         alle_dfs.append(df)

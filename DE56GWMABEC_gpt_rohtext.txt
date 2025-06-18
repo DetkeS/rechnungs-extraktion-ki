@@ -1,0 +1,33 @@
+Rechnungsnummer: 123456  
+Rechnungsdatum: 15. Oktober 2023  
+Lieferant: Beispiel GmbH  
+Adresse des Lieferanten: Musterstraße 1, 12345 Musterstadt  
+Empfänger: Max Mustermann  
+Adresse des Empfängers: Beispielweg 2, 54321 Beispielstadt  
+
+Artikelpositionen:  
+1. Produkt: Laptop Modell X  
+   Menge: 1  
+   Einzelpreis: 1.000,00 €  
+   Gesamtpreis: 1.000,00 €  
+
+2. Produkt: Maus Modell Y  
+   Menge: 2  
+   Einzelpreis: 20,00 €  
+   Gesamtpreis: 40,00 €  
+
+3. Produkt: Tastatur Modell Z  
+   Menge: 1  
+   Einzelpreis: 50,00 €  
+   Gesamtpreis: 50,00 €  
+
+Zwischensumme: 1.090,00 €  
+Mehrwertsteuer (19%): 207,10 €  
+Gesamtbetrag: 1.297,10 €  
+
+Zahlungsbedingungen: Zahlung innerhalb von 14 Tagen ohne Abzug  
+Bankverbindung: Beispielbank, IBAN: DE12345678901234567890, BIC: BEISPIELBIC  
+
+Kontakt:  
+Telefon: 01234 567890  
+E-Mail: info@beispiel-gmbh.de
