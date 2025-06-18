@@ -1,39 +1,49 @@
 # ==========================================
 # 📦 INITIALISIERUNG UND KONFIGURATION
 # ==========================================
-import os
-import time
-import shutil
-import atexit
-import sys
-import pandas as pd
-from datetime import datetime
-from pathlib import Path
-import openai
-import fitz  # PyMuPDF
-from io import StringIO
-import pandas as pd  # Falls nicht ohnehin schon importiert
+# 🔁 System & Dateioperationen
+import os              # z. B. für Umgebungsvariablen oder Dateinamen prüfen
+import sys             # zur Umleitung von stdout für Logging
+import shutil          # zum Verschieben von Dateien
+import atexit          # für automatische Sicherung bei Abbruch
 
-#neu vom zurückführen der dateien
-from PyPDF2 import PdfReader
-from pdf2image import convert_from_path
-from base64 import b64encode
-from io import BytesIO
-basisverzeichnis = Path(__file__).resolve().parent
-zeitstempel = datetime.now().strftime('%Y%m%d_%H%M')
+# 📊 Datenverarbeitung
+import pandas as pd    # Tabellenverarbeitung für CSV, XLSX
+from io import StringIO  # um Text als Dateiobjekt zu behandeln (z. B. für CSV-PARSING)
 
-input_folder = basisverzeichnis / "zu_verarbeiten"
-archiv_folder = basisverzeichnis / f"{zeitstempel}_verarbeitet"
-nicht_rechnung_folder = basisverzeichnis / f"{zeitstempel}_nicht_rechnung"
-problemordner = basisverzeichnis / f"{zeitstempel}_problemrechnungen"
-bereits_verarbeitet_ordner = basisverzeichnis / f"{zeitstempel}_bereits_verarbeitet"
-output_excel = basisverzeichnis / "artikelpositionen_ki.xlsx"
-protokoll_excel = basisverzeichnis / "verarbeitete_dateien.xlsx"
-protokoll_excel = Path("verarbeitete_dateien.xlsx")
+# 🗂 Pfad- und Zeitsteuerung
+from datetime import datetime  # für Zeitstempel in Dateinamen
+from pathlib import Path       # Plattformunabhängige Pfaddefinitionen
 
-TOCHTERFIRMEN = ["Wähler", "Kuhlmann", "BHK", "Mudcon","Seier"] #Bekannte Firmen für die Rechnungen verarbeitet werden. 
-VERARBEITUNGSFEHLER = []  # zentrale Fehlerliste für alle Fehlermeldungen
+# 🧠 OpenAI API
+import openai          # GPT-Modelle aufrufen (z. B. für Klassifikation, OCR, Kategorisierung)
 
+# 📄 PDF-Verarbeitung (Text- und Bildextraktion)
+import fitz            # PyMuPDF – extrahiert Text aus PDFs
+from pdf2image import convert_from_path  # erzeugt Bilder aus PDF-Seiten
+
+# 📦 Bildverarbeitung
+from base64 import b64encode  # für GPT-Bilder als base64 (z. B. erste Seite einer PDF)
+from io import BytesIO        # für temporären Bildspeicher (PNG in base64)
+
+
+# 📁 Pfade & Dateinamen (werden beim Start automatisch erstellt)
+basisverzeichnis = Path(__file__).resolve().parent            # Hauptverzeichnis der Skriptdatei
+zeitstempel = datetime.now().strftime('%Y%m%d_%H%M')          # Zeitstempel für Archiv-Ordner
+
+input_folder = basisverzeichnis / "zu_verarbeiten"            # Eingang für neue Rechnungen
+archiv_folder = basisverzeichnis / f"{zeitstempel}_verarbeitet"          # erfolgreich verarbeitet
+nicht_rechnung_folder = basisverzeichnis / f"{zeitstempel}_nicht_rechnung"  # z. B. Angebote, Werbung etc.
+problemordner = basisverzeichnis / f"{zeitstempel}_problemrechnungen"    # unklare/fehlerhafte Fälle
+bereits_verarbeitet_ordner = basisverzeichnis / f"{zeitstempel}_bereits_verarbeitet"  # Duplikate
+output_excel = basisverzeichnis / "artikelpositionen_ki.xlsx" # Haupt-Ausgabedatei
+protokoll_excel = basisverzeichnis / "verarbeitete_dateien.xlsx"  # Logbuch über bereits verarbeitete Dateien
+
+# 🏢 Bekannte Einheiten oder Firmen
+TOCHTERFIRMEN = ["Wähler", "Kuhlmann", "BHK", "Mudcon", "Seier"]  # Für Zuordnungen von Rechnungsempfängern
+
+# 🛑 Zentrale Fehlerliste für Laufzeitfehler
+VERARBEITUNGSFEHLER = []
 
 
 # Logging in Konsole + Datei gleichzeitig
@@ -152,10 +162,12 @@ def speichere_verarbeitete_datei(dateiname):
 
 def extrahiere_text_aus_pdf(pfad):
     try:
-        reader = PdfReader(pfad)
-        return "\n".join([page.extract_text() or "" for page in reader.pages]).strip()
+        doc = fitz.open(pfad)
+        return "\n".join([page.get_text() for page in doc]).strip()
     except Exception as e:
-        VERARBEITUNGSFEHLER.append(f"PDF-Text konnte nicht extrahiert werden ({pfad}): {e}")
+        fehlermeldung = f"PDF-Text konnte nicht extrahiert werden ({pfad}): {e}"
+        print(fehlermeldung)
+        VERARBEITUNGSFEHLER.append(fehlermeldung)
         return ""
 
 def konvertiere_erste_seite_zu_base64(pfad):
@@ -455,66 +467,6 @@ def plausibilitaet_pruefen(df):
         VERARBEITUNGSFEHLER.append(fehlermeldung)
     return df
 
-def harmonisiere_daten_mit_mapping(df, mapping_path=None):
-    print("🔧 Harmonisiere Einheiten & Artikelbezeichnungen mit Mapping + Logging ...")
-
-    default_map = {
-        "t": "Tonne", "t.": "Tonne", "T": "Tonne",
-        "kg": "Kilogramm",
-        "St": "Stück", "St.": "Stück", "st": "Stück",
-        "m": "Meter", "m.": "Meter",
-        "l": "Liter", "L": "Liter",
-        "psch": "Pauschale", "pauschal": "Pauschale"
-    }
-
-    # Mapping-Datei automatisch erzeugen, falls sie fehlt
-    if mapping_path and not Path(mapping_path).exists():
-        print(f"📄 Mapping-Datei nicht gefunden – leeres Template wird angelegt: {mapping_path}")
-        pd.DataFrame(columns=["Einheit_roh", "Einheit_normiert"]).to_excel(mapping_path, index=False)
-
-    mapping_dict = default_map.copy()
-    if mapping_path and Path(mapping_path).exists():
-        try:
-            df_map = pd.read_excel(mapping_path)
-            for _, row in df_map.iterrows():
-                roh = str(row["Einheit_roh"]).strip()
-                norm = str(row["Einheit_normiert"]).strip()
-                if roh and norm:
-                    mapping_dict[roh] = norm
-            print(f"📄 Mapping-Datei geladen: {mapping_path}")
-        except Exception as e:
-            print(f"⚠️ Fehler beim Laden des Mappings: {e}")
-
-    unbekannte = set()
-
-    def reinige_einheit(e):
-        e_clean = str(e).strip().replace(".", "")
-        normiert = mapping_dict.get(e_clean)
-        if not normiert:
-            unbekannte.add(e_clean)
-            return e_clean
-        return normiert
-
-    def reinige_bezeichnung(text):
-        if not isinstance(text, str):
-            return text
-        return text.strip().replace("  ", " ")
-
-    if "Einheit" in df.columns:
-        df["Einheit"] = df["Einheit"].apply(reinige_einheit)
-    if "Artikelbezeichnung" in df.columns:
-        df["Artikelbezeichnung"] = df["Artikelbezeichnung"].apply(reinige_bezeichnung)
-
-    if unbekannte:
-        log_df = pd.DataFrame(sorted(unbekannte), columns=["Einheit_roh"])
-        log_df["Einheit_normiert"] = ""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-        log_path = output_excel.parent / f"einheiten_log_{timestamp}.xlsx"
-        log_df.to_excel(log_path, index=False)
-        print(f"📝 {len(unbekannte)} unbekannte Einheiten gespeichert in: {log_path}")
-
-    return df
-   
 def bereinige_zahlen(df):
     print("🧠 Formatiere und korrigiere Zahlen …")
     for spalte in ["Menge", "Einzelpreis", "Gesamtpreis"]:
