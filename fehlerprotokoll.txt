@@ -1,0 +1,2 @@
+❌ Fehler in 'Kategorisierung': 'Kategorie'
+❌ Kategorisierung schlug fehl. Verarbeitung abgebrochen.

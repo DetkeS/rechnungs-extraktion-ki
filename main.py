@@ -6,6 +6,7 @@ import os              # z. B. für Umgebungsvariablen oder Dateinamen prüfen
 import sys             # zur Umleitung von stdout für Logging
 import shutil          # zum Verschieben von Dateien
 import atexit          # für automatische Sicherung bei Abbruch
+import time            # für Statistik-Ausgaben (z. B. Gesamtdauer)
 
 # 📊 Datenverarbeitung
 import pandas as pd    # Tabellenverarbeitung für CSV, XLSX
@@ -15,9 +16,6 @@ from io import StringIO  # um Text als Dateiobjekt zu behandeln (z. B. für CS
 from datetime import datetime  # für Zeitstempel in Dateinamen
 from pathlib import Path       # Plattformunabhängige Pfaddefinitionen
 
-# 🧠 OpenAI API
-import openai          # GPT-Modelle aufrufen (z. B. für Klassifikation, OCR, Kategorisierung)
-
 # 📄 PDF-Verarbeitung (Text- und Bildextraktion)
 import fitz            # PyMuPDF – extrahiert Text aus PDFs
 from pdf2image import convert_from_path  # erzeugt Bilder aus PDF-Seiten
@@ -26,6 +24,32 @@ from pdf2image import convert_from_path  # erzeugt Bilder aus PDF-Seiten
 from base64 import b64encode  # für GPT-Bilder als base64 (z. B. erste Seite einer PDF)
 from io import BytesIO        # für temporären Bildspeicher (PNG in base64)
 
+# 🧠 OpenAI API
+import openai                  # GPT-Modelle aufrufen (z. B. für Klassifikation, OCR, Kategorisierung)
+from dotenv import load_dotenv  # .env-Dateien lesen für sichere API-Key-Verwaltung
+
+# 🔐 API-Key aus .env-Datei laden (nicht im Code sichtbar speichern)
+# 🔄 Lade Umgebungsvariablen aus .env-Datei (muss im Hauptverzeichnis liegen)
+load_dotenv()
+
+# 📌 Setze den OpenAI-API-Key aus Umgebungsvariable
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# 🧱 Kritischer Check – Skript soll sofort abbrechen, wenn kein Key vorhanden ist
+if not openai.api_key:
+    print("❌ Kritischer Fehler: OPENAI_API_KEY nicht gesetzt.")
+    print("ℹ️  Bitte prüfe deine .env-Datei oder setze den API-Key manuell.")
+    print("📋 Skript wird aus Sicherheitsgründen abgebrochen.")
+    
+    # Optional: Logging ins Fehlerprotokoll (falls global schon existiert)
+    try:
+        with open("fehlerprotokoll.txt", "a", encoding="utf-8") as f:
+            f.write("❌ Kein OpenAI API-Key gefunden – kritischer Abbruch.\n")
+    except Exception:
+        pass
+
+    import sys
+    sys.exit(1)  # 🔚 Sofortiger, harter Abbruch
 
 # 📁 Pfade & Dateinamen (werden beim Start automatisch erstellt)
 basisverzeichnis = Path(__file__).resolve().parent            # Hauptverzeichnis der Skriptdatei
@@ -79,17 +103,9 @@ def speichere_backup():
     if alle_dfs:
         backup = pd.concat(alle_dfs, ignore_index=True)
         backup.to_excel(output_excel.parent / "backup_abbruch.xlsx", index=False)
+
 atexit.register(speichere_backup)
 print("💾 Backup-Funktion registriert")
-
-
-# Ordner sicherstellen
-for pfad in [
-    input_folder, archiv_folder, nicht_rechnung_folder,
-    problemordner, bereits_verarbeitet_ordner
-]:
-    pfad.mkdir(parents=True, exist_ok=True)
-
 
 
 # ==========================================
@@ -97,7 +113,7 @@ for pfad in [
 # ==========================================
 
 # Logging einschalten
-logdatei = output_excel.parent / f"verarbeitung_log_{datetime.now():%Y%m%d_%H%M}.txt"
+logdatei = output_excel.parent / f"{zeitstempel}_verarbeitung_log.txt"
 sys.stdout = DualLogger(logdatei)
 print(f"💾 Logging aktiv: {logdatei.name}")
 
@@ -110,7 +126,12 @@ def sicher_ausführen(funktion, name, *args, **kwargs):
         print(fehlermeldung)
         VERARBEITUNGSFEHLER.append(fehlermeldung)
         return None
-    
+  
+# 🔁 Robuster Datei-Move: erstellt Zielordner nur bei Bedarf
+def move_with_folder(src_path, target_folder, target_filename):
+    target_folder.mkdir(parents=True, exist_ok=True)
+    shutil.move(src_path, target_folder / target_filename)
+  
 def zeige_next_steps_übersicht(batch_ordner):
     print("\n\n📋 NÄCHSTE SCHRITTE (vor dem nächsten Lauf):\n")
     print("1️⃣  🔁 Verschiebe oder lösche die verarbeiteten Batch-Dateien:")
@@ -152,9 +173,6 @@ def speichere_verarbeitete_datei(dateiname):
         fehlermeldung = f"Fehler beim Speichern in Protokolldatei ({dateiname}): {e}"
         print(fehlermeldung)
         VERARBEITUNGSFEHLER.append(fehlermeldung)
-
-
-
 
 # ==========================================
 # 📑 VORVERARBEITUNG & PDF-EXTRAKTION
@@ -400,8 +418,16 @@ def kategorisiere_artikel_global(df):
 
     # Kombiniere alles
     gesamt_kat = pd.concat([reuse_df[["Artikelbezeichnung", "Hauptkategorie", "Unterkategorie", "Herkunft"]], cat_gpt], ignore_index=True)
-    df = df.merge(gesamt_kat, on="Artikelbezeichnung", how="left")
-    df.rename(columns={"Hauptkategorie": "Kategorie"}, inplace=True)
+   
+    # 🛡️ Abbruch, wenn keine Kategorien erzeugt wurden
+    if gesamt_kat.empty:
+        raise ValueError("Kategorisierung fehlgeschlagen: keine Kategorien verfügbar (reuse + GPT leer)")
+
+    # 🛡️ Sicherer Rename: nur wenn Spalte existiert
+    if "Hauptkategorie" in df.columns:
+        df.rename(columns={"Hauptkategorie": "Kategorie"}, inplace=True)
+    else:
+        raise ValueError("Spalte 'Hauptkategorie' fehlt nach Zusammenführung")
 
     # Baue Log
     for _, row in gesamt_kat.iterrows():
@@ -413,8 +439,9 @@ def kategorisiere_artikel_global(df):
             "Zeitpunkt": datetime.now()
         })
 
-    return df, logeintraege
-
+    # 🛡️ Finaler Check
+    if "Kategorie" not in df.columns:
+        raise ValueError("Spalte 'Kategorie' fehlt – Kategorisierung unvollständig")
 
 # ==========================================
 # 🔢 DATENPARSING UND TRANSFORMATION
@@ -547,8 +574,7 @@ def harmonisiere_daten_mit_mapping(df, mapping_path=None):
     if unbekannte:
         log_df = pd.DataFrame(sorted(unbekannte), columns=["Einheit_roh"])
         log_df["Einheit_normiert"] = ""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-        log_path = output_excel.parent / f"einheiten_log_{timestamp}.xlsx"
+        log_path = output_excel.parent / f"{zeitstempel}_einheiten_log.xlsx"
         log_df.to_excel(log_path, index=False)
         print(f"📝 {len(unbekannte)} unbekannte Einheiten gespeichert in: {log_path}")
 
@@ -688,7 +714,7 @@ def merge_and_enrich(ordner):
     ergebnis = sicher_ausführen(kategorisiere_artikel_global, "Kategorisierung", merged)
     if ergebnis is None:
         VERARBEITUNGSFEHLER.append("❌ Kategorisierung schlug fehl. Verarbeitung abgebrochen.")
-        global abbrechen
+        #global abbrechen überflüssig da oben schon? 18.06.25 SD
         abbrechen = True
         return
     merged, logeintraege = ergebnis
@@ -720,7 +746,7 @@ def hauptprozess():
         print("🛂 Starte Vorprüfung der Datei")
         if dateiname in verarbeitete:
             print("⏭️ Bereits verarbeitet.")
-            shutil.move(pdf_path, bereits_verarbeitet_ordner / dateiname)
+            move_with_folder(pdf_path, bereits_verarbeitet_ordner, dateiname)
             speichere_verarbeitete_datei(dateiname)
             continue
         ist_lesbar = pdf_hat_nutzbaren_text(pdf_path)
@@ -729,7 +755,7 @@ def hauptprozess():
             b64 = konvertiere_erste_seite_zu_base64(pdf_path)
             if not b64:
                 print("⚠️ Kein OCR möglich → verschoben.")
-                shutil.move(pdf_path, problemordner / f"unlesbar_{dateiname}")
+                move_with_folder(pdf_path, problemordner, f"unlesbar_{dateiname}")
                 speichere_verarbeitete_datei(dateiname)
                 probleme += 1
                 continue
@@ -752,7 +778,7 @@ def hauptprozess():
             dauer_text += dauer
         if klassifikation != "rechnung":
             print(f"📄 Dokumenttyp: {klassifikation}")
-            shutil.move(pdf_path, nicht_rechnung_folder / f"{klassifikation}_{dateiname}")
+            move_with_folder(pdf_path, nicht_rechnung_folder, f"{klassifikation}_{dateiname}")
             speichere_verarbeitete_datei(dateiname)
             nicht_rechnungen += 1
             print(f"❌ Nicht-Rechnung → verschoben nach: {klassifikation}_{dateiname}")
@@ -761,7 +787,7 @@ def hauptprozess():
         antwort = gpt_abfrage_inhalt(text=text)
         if antwort.strip().lower().startswith("fehler"):
             print("⚠️ GPT-Inhaltsextraktion fehlgeschlagen → Problemrechnungen")
-            shutil.move(pdf_path, problemordner / f"GPT_Fehler_{dateiname}")
+            move_with_folder(pdf_path, problemordner, f"GPT_Fehler_{dateiname}")
             speichere_verarbeitete_datei(dateiname)
             probleme += 1
             continue
@@ -769,7 +795,7 @@ def hauptprozess():
         df = parse_csv_in_dataframe(antwort, dateiname)
         if df is None or df.empty:
             print("⚠️ Tabelle leer oder fehlerhaft → Problemrechnungen")
-            shutil.move(pdf_path, problemordner / f"Tabelle_unbrauchbar_{dateiname}")
+            move_with_folder(pdf_path, problemordner, f"Tabelle_unbrauchbar_{dateiname}")
             speichere_verarbeitete_datei(dateiname)
             probleme += 1
             continue
@@ -779,13 +805,14 @@ def hauptprozess():
         df["Verarbeitung_Dauer"] = round(dauer, 2)
         df["Zugehörigkeit"] = erkenne_zugehoerigkeit(text)
         alle_dfs.append(df)
-        shutil.move(pdf_path, archiv_folder / dateiname)
+        move_with_folder(pdf_path, archiv_folder, dateiname)
         speichere_verarbeitete_datei(dateiname)
         if index % FLUSH_INTERVAL == 0:
             flush = pd.concat(alle_dfs, ignore_index=True)
             flush.to_excel(output_excel.parent / f"artikelpositionen_ki_batch_{index}.xlsx", index=False)
             print(f"📏 Zwischenspeicherung nach {len(flush)} Dateien: artikelpositionen_ki_batch_{index}.xlsx")
             alle_dfs.clear()
+        print("")  # ➕ Fügt nach jedem Datei-Durchlauf eine Leerzeile ein
     if alle_dfs:
         timestamped = output_excel.parent / f"artikelpositionen_ki_batch_final.xlsx"
         pd.concat(alle_dfs, ignore_index=True).to_excel(timestamped, index=False)
@@ -794,7 +821,15 @@ def hauptprozess():
 
     gesamt_dauer = time.time() - gesamt_start
     gesamt = anzahl_text + anzahl_ocr
+    print("\n\n" + "═" * 60) # 🔽 Visuelle Trennung vor der Abschlussausgabe zur besseren Lesbarkeit
+    
+    # ⏱️ Ausgabe der Gesamtdauer in Stunden, Minuten, Sekunden
+    stunden = int(gesamt_dauer // 3600)
+    minuten = int((gesamt_dauer % 3600) // 60)
+    sekunden = int(gesamt_dauer % 60)
     print(f"🌟 Verarbeitung beendet: {gesamt} Dateien in {gesamt_dauer:.1f}s")
+    print("")  # ➕ Fügt eine Leerzeile ein
+    print("📊 Verarbeitungsstatistik:\n")
     if gesamt:
         print(f"📜 Ø/Datei: {gesamt_dauer/gesamt:.2f}s")
         print(f"📄 Textbasiert: {anzahl_text} ({anzahl_text/gesamt:.1%}), Ø {dauer_text/max(1,anzahl_text):.2f}s")
